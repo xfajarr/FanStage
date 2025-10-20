@@ -4,6 +4,7 @@ import { Menu, X, Wallet, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import ConnectWalletButton from '../ConnectWalletButton';
+import { NetworkSwitch } from '../NetworkSwitch';
 import { usePrivy } from '@privy-io/react-auth';
 
 const navItems = [
@@ -19,11 +20,6 @@ export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { authenticated, user } = usePrivy();
   const location = useLocation();
-
-  const handleConnect = () => {
-    // This will be handled by ConnectWalletButton
-    console.log('🔐 Navigation: Connect button clicked');
-  };
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-lg">
@@ -45,7 +41,7 @@ export default function Navigation() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-1">
             {navItems
-              .filter((item) => !item.requiresAuth || authenticated)
+              .filter((item) => !('requiresAuth' in item) || !item.requiresAuth || authenticated)
               .map((item) => (
               <Link
                 key={item.path}
@@ -71,14 +67,7 @@ export default function Navigation() {
                     Portfolio
                   </Button>
                 </Link>
-                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                  <span className="font-mono">
-                    {user?.wallet?.address
-                      ? `${user.wallet.address.slice(0, 6)}…${user.wallet.address.slice(-4)}`
-                      : 'Connected'
-                    }
-                  </span>
-                </div>
+                <NetworkSwitch />
                 <ConnectWalletButton />
               </>
             ) : (
@@ -104,7 +93,7 @@ export default function Navigation() {
           <div className="md:hidden py-4 animate-fade-in">
             <div className="flex flex-col space-y-2">
               {navItems
-                .filter((item) => !item.requiresAuth || authenticated)
+                .filter((item) => !('requiresAuth' in item) || !item.requiresAuth || authenticated)
                 .map((item) => (
                 <Link
                   key={item.path}
@@ -123,6 +112,9 @@ export default function Navigation() {
               <div className="pt-4 border-t border-border">
                 {authenticated && user ? (
                   <>
+                    <div className="w-full mb-2">
+                      <NetworkSwitch />
+                    </div>
                     <Link to="/portfolio">
                       <Button
                         variant="outline"
