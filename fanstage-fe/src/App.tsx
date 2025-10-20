@@ -12,30 +12,34 @@ import Portfolio from "./pages/Portfolio";
 import RegisterArtist from "./pages/RegisterArtist";
 import CreateCampaign from "./pages/CreateCampaign";
 import Staking from "./pages/Staking";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import { PrivyContextProvider } from "./providers/PrivyProvider";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/campaigns" element={<Campaigns />} />
-          <Route path="/campaigns/:id" element={<CampaignDetail />} />
-          <Route path="/artists" element={<Artists />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/portfolio" element={<Portfolio />} />
-          <Route path="/register-artist" element={<RegisterArtist />} />
-          <Route path="/create-campaign" element={<CreateCampaign />} />
-          <Route path="/staking" element={<Staking />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <PrivyContextProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/campaigns" element={<Campaigns />} />
+            <Route path="/campaigns/:id" element={<CampaignDetail />} />
+            <Route path="/artists" element={<Artists />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/register-artist" element={<RegisterArtist />} />
+            <Route path="/create-campaign" element={<CreateCampaign />} />
+            <Route path="/staking" element={<Staking />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </PrivyContextProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

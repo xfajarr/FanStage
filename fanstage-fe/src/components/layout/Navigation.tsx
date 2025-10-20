@@ -4,6 +4,7 @@ import { Menu, X, Wallet, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import ConnectWalletButton from '../ConnectWalletButton';
+import { usePrivy } from '@privy-io/react-auth';
 
 const navItems = [
   { name: 'Home', path: '/' },
@@ -11,15 +12,17 @@ const navItems = [
   { name: 'Artists', path: '/artists' },
   { name: 'Staking', path: '/staking' },
   { name: 'Dashboard', path: '/dashboard' },
-];
+  { name: 'Profile', path: '/profile', requiresAuth: true },
+] as const;
 
 export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [connected, setConnected] = useState(false);
+  const { authenticated, user } = usePrivy();
   const location = useLocation();
 
   const handleConnect = () => {
-    setConnected(!connected);
+    // This will be handled by ConnectWalletButton
+    console.log('🔐 Navigation: Connect button clicked');
   };
 
   return (
@@ -41,7 +44,9 @@ export default function Navigation() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-1">
-            {navItems.map((item) => (
+            {navItems
+              .filter((item) => !item.requiresAuth || authenticated)
+              .map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
@@ -54,37 +59,29 @@ export default function Navigation() {
               >
                 {item.name}
               </Link>
-            ))}
+              ))}
           </div>
 
           {/* Wallet Connection */}
           <div className="hidden md:flex items-center space-x-3">
-            {connected ? (
+            {authenticated && user ? (
               <>
                 <Link to="/portfolio">
                   <Button variant="outline" size="sm" className="rounded-lg">
                     Portfolio
                   </Button>
                 </Link>
-                <Button
-                  onClick={handleConnect}
-                  variant="outline"
-                  size="sm"
-                  className="rounded-lg space-x-2"
-                >
-                  <span className="font-mono text-xs">0x742d...bEb1</span>
-                  <LogOut className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                  <span className="font-mono">
+                    {user?.wallet?.address
+                      ? `${user.wallet.address.slice(0, 6)}…${user.wallet.address.slice(-4)}`
+                      : 'Connected'
+                    }
+                  </span>
+                </div>
+                <ConnectWalletButton />
               </>
             ) : (
-              // <Button
-              //   onClick={handleConnect}
-              //   className="rounded-lg gradient-primary text-primary-foreground shadow-medium hover:shadow-strong transition-all"
-              //   size="sm"
-              // >
-              //   <Wallet className="mr-2 h-4 w-4" />
-              //   Connect Wallet
-              // </Button>
               <ConnectWalletButton />
             )}
           </div>
@@ -106,7 +103,9 @@ export default function Navigation() {
         {mobileMenuOpen && (
           <div className="md:hidden py-4 animate-fade-in">
             <div className="flex flex-col space-y-2">
-              {navItems.map((item) => (
+              {navItems
+                .filter((item) => !item.requiresAuth || authenticated)
+                .map((item) => (
                 <Link
                   key={item.path}
                   to={item.path}
@@ -117,41 +116,38 @@ export default function Navigation() {
                       ? 'bg-accent text-accent-foreground'
                       : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
                   )}
-                >
+                  >
                   {item.name}
                 </Link>
-              ))}
+                ))}
               <div className="pt-4 border-t border-border">
-                {connected ? (
+                {authenticated && user ? (
                   <>
                     <Link to="/portfolio">
-                      <Button variant="outline" className="w-full mb-2 rounded-lg">
+                      <Button
+                        variant="outline"
+                        className="w-full mb-2 rounded-lg"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
                         Portfolio
                       </Button>
                     </Link>
-                    <Button
-                      onClick={() => {
-                        handleConnect();
-                        setMobileMenuOpen(false);
-                      }}
-                      variant="outline"
-                      className="w-full rounded-lg"
-                    >
-                      <span className="font-mono text-xs mr-2">0x742d...bEb1</span>
-                      <LogOut className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center justify-between p-2 bg-muted rounded-lg mb-2">
+                      <span className="font-mono text-xs">
+                        {user?.wallet?.address
+                          ? `${user.wallet.address.slice(0, 6)}…${user.wallet.address.slice(-4)}`
+                          : 'Connected'
+                        }
+                      </span>
+                    </div>
+                    <div className="w-full">
+                      <ConnectWalletButton />
+                    </div>
                   </>
                 ) : (
-                  <Button
-                    onClick={() => {
-                      handleConnect();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="w-full rounded-lg gradient-primary text-primary-foreground"
-                  >
-                    <Wallet className="mr-2 h-4 w-4" />
-                    Connect Wallet
-                  </Button>
+                  <div className="w-full">
+                    <ConnectWalletButton />
+                  </div>
                 )}
               </div>
             </div>

@@ -1,5 +1,5 @@
 {
-  "id": "7e3ece9b-df9b-47b7-a21f-1ca8551cb7ec",
+  "id": "481d44f7-eb58-47a8-affb-58dc48e4940a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -494,8 +494,14 @@
         "wallet_address": {
           "name": "wallet_address",
           "type": "varchar(42)",
-          "primaryKey": true,
+          "primaryKey": false,
           "notNull": true
+        },
+        "privy_did": {
+          "name": "privy_did",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": false
         },
         "role": {
           "name": "role",
@@ -559,8 +565,22 @@
       },
       "indexes": {},
       "foreignKeys": {},
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "users_wallet_address_pk": {
+          "name": "users_wallet_address_pk",
+          "columns": [
+            "wallet_address"
+          ]
+        }
+      },
       "uniqueConstraints": {
+        "users_privy_did_unique": {
+          "name": "users_privy_did_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "privy_did"
+          ]
+        },
         "users_username_unique": {
           "name": "users_username_unique",
           "nullsNotDistinct": false,

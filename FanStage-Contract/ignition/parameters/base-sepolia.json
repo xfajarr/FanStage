@@ -1,0 +1,10 @@
+{
+  "DeployModule": {
+    "platformWallet": "0xADd5E67b54F3AaA8499fE546b301b7D6cc68419d",
+    "campaignCreationFee": "1000000"
+  },
+  "CampaignRegistryModule": {
+    "platformWallet": "0xADd5E67b54F3AaA8499fE546b301b7D6cc68419d",
+    "campaignCreationFee": "1000000"
+  }
+}

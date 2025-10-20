@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { usePrivy } from '@privy-io/react-auth';
 import Navigation from '@/components/layout/Navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,10 +9,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
-import { CheckCircle, Upload } from 'lucide-react';
+import { CheckCircle, Upload, Loader2 } from 'lucide-react';
+import { privyApiClient } from '@/services/privyAuth';
+import { UserProfile } from '@/types';
 
 export default function RegisterArtist() {
+  const { authenticated } = usePrivy();
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [formData, setFormData] = useState({
     artistName: '',
     bio: '',
@@ -21,12 +29,150 @@ export default function RegisterArtist() {
     portfolio: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!authenticated) {
+      navigate('/');
+      return;
+    }
+
+    // Check if user is already an artist
+    const checkUserStatus = async () => {
+      try {
+        const profile = await privyApiClient.getUserProfile();
+        setUserProfile(profile);
+        
+        if (profile.role === 'artist') {
+          toast.info('You are already registered as an artist!');
+          navigate('/dashboard');
+          return;
+        }
+      } catch (error) {
+        toast.error('Failed to load user profile');
+        navigate('/');
+      }
+    };
+
+    checkUserStatus();
+  }, [authenticated, navigate]);
+
+  const validateStep = (currentStep: number): boolean => {
+    switch (currentStep) {
+      case 1:
+        if (!formData.artistName.trim()) {
+          toast.error('Artist name is required');
+          return false;
+        }
+        if (!formData.bio.trim()) {
+          toast.error('Bio is required');
+          return false;
+        }
+        if (formData.bio.length < 50) {
+          toast.error('Bio must be at least 50 characters');
+          return false;
+        }
+        return true;
+      case 2:
+        // Social media is optional, but validate URLs if provided
+        if (formData.portfolio && !isValidUrl(formData.portfolio)) {
+          toast.error('Please enter a valid portfolio URL');
+          return false;
+        }
+        return true;
+      default:
+        return true;
+    }
+  };
+
+  const isValidUrl = (string: string): boolean => {
+    try {
+      new URL(string);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  };
+
+  const buildSocialMediaLinks = (): string => {
+    const links: string[] = [];
+    
+    if (formData.twitter) {
+      const twitterHandle = formData.twitter.replace('@', '');
+      links.push(`https://twitter.com/@${twitterHandle}`);
+    }
+    
+    if (formData.instagram) {
+      links.push(`https://instagram.com/${formData.instagram.replace('@', '')}`);
+    }
+    
+    if (formData.spotify) {
+      links.push(`https://spotify.com/artist/${formData.spotify}`);
+    }
+    
+    if (formData.portfolio) {
+      links.push(formData.portfolio);
+    }
+    
+    return links.join('\n');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateStep(step)) {
+      return;
+    }
+    
     if (step < 3) {
       setStep(step + 1);
-    } else {
-      toast.success('Application submitted successfully! We will review it shortly.');
+      return;
+    }
+    
+    // Submit artist registration
+    setIsSubmitting(true);
+    
+    try {
+      const socialMediaLinks = buildSocialMediaLinks();
+      
+      await privyApiClient.registerAsArtist({
+        artistCategory: formData.tier === 'rising-star' ? 'rising_star' : 'senior_star',
+        bio: formData.bio,
+        socialMediaLinks: socialMediaLinks || undefined,
+        profileImageUrl: undefined, // Use undefined instead of null for optional fields
+      });
+      
+      toast.success('Artist registration successful! Welcome to FanStage!');
+      
+      // Redirect to dashboard after successful registration
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
+      
+    } catch (error: unknown) {
+      let errorMessage = "Failed to register as artist";
+      
+      if (error && typeof error === 'object' && 'response' in error) {
+        const response = (error as { response?: { data?: { error?: string | { message?: string; name?: string } } } }).response?.data;
+        if (response?.error) {
+          // Handle ZodError or other error objects
+          if (typeof response.error === 'string') {
+            errorMessage = response.error;
+          } else if (response.error?.message) {
+            errorMessage = response.error.message;
+          } else if (response.error?.name === 'ZodError') {
+            // Extract Zod validation errors
+            try {
+              const zodErrors = JSON.parse(response.error.message);
+              errorMessage = zodErrors.map((err: { message?: string }) => err.message || 'Validation error').join(', ');
+            } catch {
+              errorMessage = 'Validation error occurred';
+            }
+          }
+        }
+      }
+      
+      toast.error(errorMessage);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -235,9 +381,17 @@ export default function RegisterArtist() {
                 </Button>
                 <Button
                   type="submit"
+                  disabled={isSubmitting}
                   className="rounded-lg gradient-primary text-primary-foreground"
                 >
-                  {step === 3 ? 'Submit Application' : 'Continue'}
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      {step === 3 ? 'Submitting...' : 'Processing...'}
+                    </>
+                  ) : (
+                    step === 3 ? 'Submit Application' : 'Continue'
+                  )}
                 </Button>
               </div>
             </form>

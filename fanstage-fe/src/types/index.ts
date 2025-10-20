@@ -2,6 +2,22 @@ export type UserRole = 'fan' | 'artist' | 'agency';
 
 export type ArtistTier = 'senior' | 'rising-star';
 
+export type ArtistCategory = 'senior_star' | 'rising_star';
+
+// Backend user profile response type
+export interface UserProfile {
+  walletAddress: string;
+  username: string | null;
+  email: string | null;
+  role: UserRole;
+  bio: string | null;
+  profileImageUrl: string | null;
+  artistCategory: ArtistCategory | null;
+  socialMediaLinks: string | null;
+  createdAt: string;
+}
+
+// Legacy User interface for backward compatibility
 export interface User {
   id: string;
   walletAddress: string;

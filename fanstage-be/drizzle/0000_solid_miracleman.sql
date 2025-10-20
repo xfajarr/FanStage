@@ -65,7 +65,8 @@ CREATE TABLE "membership_passes" (
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
-	"wallet_address" varchar(42) PRIMARY KEY NOT NULL,
+	"wallet_address" varchar(42) NOT NULL,
+	"privy_did" varchar(256),
 	"role" "user_role" DEFAULT 'fan' NOT NULL,
 	"artist_category" "artist_category",
 	"username" varchar(256) NOT NULL,
@@ -75,6 +76,8 @@ CREATE TABLE "users" (
 	"social_media_links" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "users_wallet_address_pk" PRIMARY KEY("wallet_address"),
+	CONSTRAINT "users_privy_did_unique" UNIQUE("privy_did"),
 	CONSTRAINT "users_username_unique" UNIQUE("username"),
 	CONSTRAINT "users_email_unique" UNIQUE("email")
 );

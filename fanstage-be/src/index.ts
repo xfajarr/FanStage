@@ -7,11 +7,13 @@ import 'dotenv/config'
 
 // Import routes
 import usersRouter from './routes/users.js'
+import usersPrivyRouter from './routes/usersPrivy.js'
 import campaignsRouter from './routes/campaigns.js'
 import investmentsRouter from './routes/investments.js'
 import tokensRouter from './routes/tokens.js'
 import nftsRouter from './routes/nfts.js'
 import updatesRouter from './routes/updates.js'
+import { authRoutes } from './routes/auth.js'
 
 const app = new Hono()
 
@@ -40,11 +42,13 @@ app.get('/health', (c) => {
 
 // API routes
 app.route('/api/users', usersRouter)
+app.route('/api/users-privy', usersPrivyRouter)
 app.route('/api/campaigns', campaignsRouter)
 app.route('/api/investments', investmentsRouter)
 app.route('/api/tokens', tokensRouter)
 app.route('/api/nfts', nftsRouter)
 app.route('/api/updates', updatesRouter)
+app.route('/api/auth', authRoutes)
 
 // 404 handler
 app.notFound((c) => {

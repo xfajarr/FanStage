@@ -1,4 +1,4 @@
-import { pgTable, serial, text, varchar, boolean, timestamp, integer, pgEnum, decimal } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, varchar, boolean, timestamp, integer, pgEnum, decimal, primaryKey } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 
 export const userRole = pgEnum('user_role', ['fan', 'artist', 'agency']);
@@ -6,7 +6,8 @@ export const artistCategory = pgEnum('artist_category', ['senior_star', 'rising_
 export const campaignStatus = pgEnum('campaign_status', ['ongoing', 'funded', 'completed', 'cancelled']);
 
 export const users = pgTable('users', {
-    walletAddress: varchar('wallet_address', { length: 42 }).primaryKey(),
+    walletAddress: varchar('wallet_address', { length: 42 }).notNull(),
+    privyDid: varchar('privy_did', { length: 256 }).unique(),
 
     role: userRole('role').notNull().default('fan'),
     artistCategory: artistCategory('artist_category'),
@@ -20,7 +21,9 @@ export const users = pgTable('users', {
 
     createdAt: timestamp('created_at').notNull().default(sql`now()`),
     updatedAt: timestamp('updated_at').notNull().default(sql`now()`),
-});
+}, (table) => ({
+    pk: primaryKey({ columns: [table.walletAddress] }),
+}));
 
 export const usersRelations = relations(users, ({ many, one }) => ({
     campaigns: many(campaigns),

@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
-import { usePrivy, useWallets } from "@privy-io/react-auth";
-import { Wallet, LogOut, ChevronDown, Layers } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { usePrivy, useWallets, getAccessToken } from "@privy-io/react-auth";
+import { Wallet, LogOut, ChevronDown, Copy, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
 
 function short(addr?: string) {
   return addr ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : "";
@@ -19,16 +20,42 @@ export default function ConnectWalletButton() {
   const { wallets, ready: walletsReady } = useWallets();
   const [isConnecting, setIsConnecting] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const copyTimeoutRef = useRef<number | null>(null);
+  const wasAuthenticated = useRef(authenticated);
+  const navigate = useNavigate();
 
   const wallet = useMemo(
     () => wallets.find((w) => w.type === "ethereum"),
     [wallets]
   );
+  const address = wallet?.address || user?.wallet?.address || "";
 
   const handleConnect = async () => {
     setIsConnecting(true);
     try {
       await login();
+      
+      // 🚀 Enhanced logging for debugging
+      console.log('🔐 Privy login completed');
+      // Test API connection after login
+      if (authenticated) {
+        try {
+          const token = await getAccessToken();
+          console.log('🔑 Access token retrieved:', token?.substring(0, 20) + '...');
+          
+          // Test backend connection
+          const response = await fetch('http://localhost:3000/api/auth/health');
+          console.log('🏥 Backend health check:', response.status);
+          
+          if (response.ok) {
+            const healthData = await response.json();
+            console.log('✅ Backend health:', healthData);
+          }
+        } catch (error) {
+          console.error('❌ Backend connection failed:', error);
+        }
+      }
     } finally {
       setIsConnecting(false);
     }
@@ -43,10 +70,43 @@ export default function ConnectWalletButton() {
     }
   };
 
-  const handleNetworkSwitch = (network: string) => {
-    // Implement network switching logic here
-    console.log(`Switching to ${network} network`);
+  const handleCopyAddress = async () => {
+    if (!address || typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
+      console.warn("Clipboard API not available");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(address);
+      setCopied(true);
+      if (copyTimeoutRef.current) {
+        window.clearTimeout(copyTimeoutRef.current);
+      }
+      copyTimeoutRef.current = window.setTimeout(() => setCopied(false), 1500);
+    } catch (error) {
+      console.error("Failed to copy address", error);
+    }
   };
+
+  const handleViewOnExplorer = () => {
+    if (!address) return;
+    const explorerUrl = `https://etherscan.io/address/${address}`;
+    window.open(explorerUrl, "_blank", "noopener,noreferrer");
+  };
+
+  useEffect(() => {
+    if (!wasAuthenticated.current && authenticated) {
+      navigate("/profile");
+    }
+    wasAuthenticated.current = authenticated;
+  }, [authenticated, navigate]);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) {
+        window.clearTimeout(copyTimeoutRef.current);
+      }
+    };
+  }, []);
 
   if (!ready || !walletsReady) {
     return (
@@ -103,23 +163,24 @@ export default function ConnectWalletButton() {
           Wallet Address
         </div>
         <div className="px-2 py-1.5 font-mono text-xs">
-          {wallet?.address || user?.wallet?.address || "Connected"}
+          {address || "Connected"}
         </div>
         <DropdownMenuSeparator />
-        <div className="px-2 py-1.5 text-xs text-muted-foreground">
-          Network
-        </div>
-        <DropdownMenuItem onClick={() => handleNetworkSwitch("ethereum")} className="rounded-md cursor-pointer">
-          <Layers className="mr-2 h-3 w-3" />
-          Ethereum
+        <DropdownMenuItem
+          onClick={handleCopyAddress}
+          disabled={!address}
+          className="rounded-md cursor-pointer"
+        >
+          <Copy className="mr-2 h-3 w-3" />
+          {copied ? "Copied!" : "Copy Address"}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleNetworkSwitch("polygon")} className="rounded-md cursor-pointer">
-          <Layers className="mr-2 h-3 w-3" />
-          Polygon
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleNetworkSwitch("arbitrum")} className="rounded-md cursor-pointer">
-          <Layers className="mr-2 h-3 w-3" />
-          Arbitrum
+        <DropdownMenuItem
+          onClick={handleViewOnExplorer}
+          disabled={!address}
+          className="rounded-md cursor-pointer"
+        >
+          <ExternalLink className="mr-2 h-3 w-3" />
+          View on Explorer
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
