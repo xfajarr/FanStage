@@ -239,9 +239,25 @@ campaignsRouter.put('/:id', authMiddleware, artistMiddleware, async (c) => {
     }
 
     // Update campaign
+    const {
+      projectTitle,
+      shortDescription,
+      ipfsHash,
+      targetFundingToken,
+      profitSharePercentage,
+      deadline,
+      coverImageUrl,
+    } = validatedData;
+
     const [updatedCampaign] = await db.update(campaigns)
       .set({
-        ...validatedData,
+        projectTitle,
+        shortDescription,
+        ipfsHash,
+        targetFundingToken: targetFundingToken.toString(),
+        profitSharePercentage,
+        deadline,
+        coverImageUrl: coverImageUrl ?? null,
         updatedAt: new Date(),
       })
       .where(eq(campaigns.id, campaignId))

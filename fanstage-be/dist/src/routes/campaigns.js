@@ -24,7 +24,7 @@ campaignsRouter.get('/', async (c) => {
             backerCount: sql `count(${investments.id})`,
             startDate: campaigns.createdAt,
             endDate: campaigns.deadline,
-            profitShare: sql `json_build_object('fan', ${campaigns.profitSharePercentage}, 'artist', ${sql.raw(`100 - ${campaigns.profitSharePercentage}`)})`,
+            profitShare: sql `json_build_object('fan', ${campaigns.profitSharePercentage}, 'artist', 100 - ${campaigns.profitSharePercentage})`,
             ipfsHash: campaigns.ipfsHash,
             coverImage: campaigns.coverImageUrl,
             status: campaigns.campaignStatus,
@@ -82,7 +82,7 @@ campaignsRouter.get('/featured', async (c) => {
             backerCount: sql `count(${investments.id})`,
             startDate: campaigns.createdAt,
             endDate: campaigns.deadline,
-            profitShare: sql `json_build_object('fan', ${campaigns.profitSharePercentage}, 'artist', ${sql.raw(`100 - ${campaigns.profitSharePercentage}`)})`,
+            profitShare: sql `json_build_object('fan', ${campaigns.profitSharePercentage}, 'artist', 100 - ${campaigns.profitSharePercentage})`,
             ipfsHash: campaigns.ipfsHash,
             coverImage: campaigns.coverImageUrl,
             status: campaigns.campaignStatus,
@@ -119,7 +119,7 @@ campaignsRouter.get('/:id', async (c) => {
             backerCount: sql `count(${investments.id})`,
             startDate: campaigns.createdAt,
             endDate: campaigns.deadline,
-            profitShare: sql `json_build_object('fan', ${campaigns.profitSharePercentage}, 'artist', ${sql.raw(`100 - ${campaigns.profitSharePercentage}`)})`,
+            profitShare: sql `json_build_object('fan', ${campaigns.profitSharePercentage}, 'artist', 100 - ${campaigns.profitSharePercentage})`,
             ipfsHash: campaigns.ipfsHash,
             coverImage: campaigns.coverImageUrl,
             status: campaigns.campaignStatus,
@@ -213,9 +213,16 @@ campaignsRouter.put('/:id', authMiddleware, artistMiddleware, async (c) => {
             return c.json({ error: 'Campaign not found or access denied' }, 404);
         }
         // Update campaign
+        const { projectTitle, shortDescription, ipfsHash, targetFundingToken, profitSharePercentage, deadline, coverImageUrl, } = validatedData;
         const [updatedCampaign] = await db.update(campaigns)
             .set({
-            ...validatedData,
+            projectTitle,
+            shortDescription,
+            ipfsHash,
+            targetFundingToken: targetFundingToken.toString(),
+            profitSharePercentage,
+            deadline,
+            coverImageUrl: coverImageUrl ?? null,
             updatedAt: new Date(),
         })
             .where(eq(campaigns.id, campaignId))

@@ -32,6 +32,7 @@ export const campaignUpdateSchema = z.object({
     mediaUrl: z.string().url().optional(),
 });
 export const membershipPassSchema = z.object({
+    artistId: z.string().min(1),
     passTier: z.string().min(1),
     nftTokenId: z.number(),
     mintTransactionHash: z.string().min(66).max(66),

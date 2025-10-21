@@ -6,11 +6,14 @@ import { secureHeaders } from 'hono/secure-headers';
 import 'dotenv/config';
 // Import routes
 import usersRouter from './routes/users.js';
+import usersPrivyRouter from './routes/usersPrivy.js';
 import campaignsRouter from './routes/campaigns.js';
 import investmentsRouter from './routes/investments.js';
 import tokensRouter from './routes/tokens.js';
 import nftsRouter from './routes/nfts.js';
 import updatesRouter from './routes/updates.js';
+import { authRoutes } from './routes/auth.js';
+import ipfsRouter from './routes/ipfs.js';
 const app = new Hono();
 // Middleware
 app.use('*', logger());
@@ -34,11 +37,14 @@ app.get('/health', (c) => {
 });
 // API routes
 app.route('/api/users', usersRouter);
+app.route('/api/users-privy', usersPrivyRouter);
 app.route('/api/campaigns', campaignsRouter);
 app.route('/api/investments', investmentsRouter);
 app.route('/api/tokens', tokensRouter);
 app.route('/api/nfts', nftsRouter);
 app.route('/api/updates', updatesRouter);
+app.route('/api/auth', authRoutes);
+app.route('/api/ipfs', ipfsRouter);
 // 404 handler
 app.notFound((c) => {
     return c.json({ error: 'Route not found' }, 404);
@@ -51,7 +57,7 @@ app.onError((err, c) => {
         message: err.message
     }, 500);
 });
-const port = parseInt(process.env.PORT || '3000');
+const port = parseInt(process.env.PORT || '3001');
 serve({
     fetch: app.fetch,
     port
