@@ -6,8 +6,8 @@ import { eq } from 'drizzle-orm';
 
 // Initialize Privy client
 const privy = new PrivyClient(
-  process.env.PRIVY_APP_ID || 'cmgv5dwz100pyjv0cf8x2n0xc',
-  process.env.PRIVY_APP_SECRET || 'GWYfjLcXP3o1Wm1SPh3ddddNoENs2Y2MCtDmPDBPnDpSMauGCtHHiV5apNbbbHecpuwn19Tm6ENddgsEYSS6LDu'
+  process.env.PRIVY_APP_ID ?? '',
+  process.env.PRIVY_APP_SECRET ?? ''
   // You can also include the verification key directly to avoid API calls
   // jwtVerificationKey: process.env.PRIVY_JWT_VERIFICATION_KEY || '',
 );

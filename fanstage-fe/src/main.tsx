@@ -14,7 +14,7 @@ createRoot(document.getElementById("root")!).render(
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <PrivyProvider
-          appId={import.meta.env.VITE_PRIVY_APP_ID || "cmgv5dwz100pyjv0cf8x2n0xc"}
+          appId={import.meta.env.VITE_PRIVY_APP_ID ?? ""}
           config={{
             loginMethods: ["wallet", "email", "twitter", "google"],
             appearance: {

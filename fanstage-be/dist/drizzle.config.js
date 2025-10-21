@@ -3,6 +3,6 @@ export default {
     out: './drizzle',
     dialect: 'postgresql',
     dbCredentials: {
-        url: process.env.DATABASE_URL || "postgresql://postgres:jarss1011@localhost:5433/fanstage",
+        url: process.env.DATABASE_URL,
     },
 };

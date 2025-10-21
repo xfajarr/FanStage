@@ -3,7 +3,7 @@ import { getAccessToken } from '@privy-io/react-auth';
 import { UserProfile, ArtistCategory } from '../types';
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001/api';
+  import.meta.env.VITE_API_BASE_URL;
 
 // Create axios instance for API calls
 export const createApiClient = (): AxiosInstance => {

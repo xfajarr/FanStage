@@ -21,12 +21,20 @@ const app = new Hono()
 // Middleware
 app.use('*', logger())
 app.use('*', secureHeaders())
+const defaultOrigins = ['http://localhost:8080']
+const allowedOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map((origin) => origin.trim()).filter(Boolean)
+  : defaultOrigins
+
 app.use('*', cors({
-  origin: ['http://localhost:8080', 'https://your-frontend-domain.com'],
+  origin: async (origin, c) => {
+    if (!origin) return 'true';
+    return allowedOrigins.includes(origin) ? 'true' : 'false';
+  },
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
-}))
+}));
 
 // Health check
 app.get('/', (c) => {
