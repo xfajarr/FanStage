@@ -26,11 +26,28 @@ const allowedOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',').map((origin) => origin.trim()).filter(Boolean)
   : defaultOrigins
 
+const resolveCorsOrigin = (origin: string | undefined) => {
+  if (!origin) {
+    return allowedOrigins[0] ?? '*'
+  }
+
+  if (allowedOrigins.includes(origin)) {
+    return origin
+  }
+
+  return allowedOrigins[0] ?? '*'
+}
+
+app.use('*', async (c, next) => {
+  const origin = c.req.header('Origin')
+  if (origin && allowedOrigins.length > 0 && !allowedOrigins.includes(origin)) {
+    return c.json({ error: 'CORS not allowed' }, 403)
+  }
+  return next()
+})
+
 app.use('*', cors({
-  origin: async (origin, c) => {
-    if (!origin) return 'true';
-    return allowedOrigins.includes(origin) ? 'true' : 'false';
-  },
+  origin: resolveCorsOrigin,
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
