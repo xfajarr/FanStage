@@ -108,20 +108,30 @@ export const useProfilePage = () => {
   }, [userProfile]);
 
   const handleSaveProfile = useCallback(async () => {
+    const trimmedUsername = formState.username.trim();
+    if (!trimmedUsername) {
+      toast({
+        title: 'Username Required',
+        description: 'Username cannot be empty.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (
+      formState.email &&
+      !formState.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)
+    ) {
+      toast({
+        title: 'Invalid Email',
+        description: 'Please enter a valid email address.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       setIsSaving(true);
-
-      if (
-        formState.email &&
-        !formState.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)
-      ) {
-        toast({
-          title: 'Invalid Email',
-          description: 'Please enter a valid email address.',
-          variant: 'destructive',
-        });
-        return;
-      }
 
       let socialMediaLinks = '';
       if (formState.twitter) {
@@ -132,9 +142,9 @@ export const useProfilePage = () => {
       }
 
       const updatedProfile = await privyApiClient.updateProfile({
-        username: formState.username || null,
-        email: formState.email || null,
-        bio: formState.bio || null,
+        username: trimmedUsername,
+        email: formState.email?.trim() || null,
+        bio: formState.bio?.trim() || null,
         socialMediaLinks: socialMediaLinks.trim() || null,
       });
 

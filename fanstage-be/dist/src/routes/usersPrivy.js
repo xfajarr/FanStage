@@ -11,16 +11,16 @@ const usersRouter = new Hono();
 // Validation schemas
 const updateProfileSchema = z.object({
     username: z.string().min(1).max(256).optional(),
-    email: z.string().email().optional(),
-    bio: z.string().max(1000).optional(),
-    profileImageUrl: z.string().url().optional(),
-    socialMediaLinks: z.string().max(1000).optional(),
+    email: z.string().email().optional().nullable(),
+    bio: z.string().max(1000).optional().nullable(),
+    profileImageUrl: z.string().url().optional().nullable(),
+    socialMediaLinks: z.string().max(1000).optional().nullable(),
 });
 const registerArtistSchema = z.object({
     artistCategory: z.enum(['senior_star', 'rising_star']),
-    bio: z.string().max(1000).optional(),
-    socialMediaLinks: z.string().max(1000).optional(),
-    profileImageUrl: z.string().url().optional(),
+    bio: z.string().max(1000).optional().nullable(),
+    socialMediaLinks: z.string().max(1000).optional().nullable(),
+    profileImageUrl: z.string().url().optional().nullable(),
 });
 // Get current user profile
 usersRouter.get('/profile', privyAuthMiddleware, async (c) => {
