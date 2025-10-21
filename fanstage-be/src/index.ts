@@ -14,6 +14,7 @@ import tokensRouter from './routes/tokens.js'
 import nftsRouter from './routes/nfts.js'
 import updatesRouter from './routes/updates.js'
 import { authRoutes } from './routes/auth.js'
+import ipfsRouter from './routes/ipfs.js'
 
 const app = new Hono()
 
@@ -49,6 +50,7 @@ app.route('/api/tokens', tokensRouter)
 app.route('/api/nfts', nftsRouter)
 app.route('/api/updates', updatesRouter)
 app.route('/api/auth', authRoutes)
+app.route('/api/ipfs', ipfsRouter)
 
 // 404 handler
 app.notFound((c) => {
@@ -64,7 +66,7 @@ app.onError((err, c) => {
   }, 500)
 })
 
-const port = parseInt(process.env.PORT || '3000')
+const port = parseInt(process.env.PORT || '3001')
 
 serve({
   fetch: app.fetch,

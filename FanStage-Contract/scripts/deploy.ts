@@ -1,34 +1,34 @@
+
 import { ethers } from "hardhat";
-import * as fs from "fs";
-import * as path from "path";
+import { ContractFactory } from "ethers";
 
 async function main() {
-  console.log("🚀 Starting deployment to Base Sepolia...\n");
+  console.log("Starting deployment...");
 
-  const [deployer] = await ethers.getSigners();
-  console.log("📍 Deploying contracts with account:", deployer.address);
+  // Deploy MockIDRX first
+  console.log("Deploying MockIDRX...");
+  const MockIDRX = await ethers.getContractFactory("MockIDRX");
+  const mockIDRX = await MockIDRX.deploy();
+  await mockIDRX.deployed();
+  console.log("MockIDRX deployed to:", mockIDRX.address);
 
-  const balance = await ethers.provider.getBalance(deployer.address);
-  console.log("💰 Account balance:", ethers.formatEther(balance), "ETH\n");
+  // Deploy ArtistIdentity
+  console.log("Deploying ArtistIdentity...");
+  const ArtistIdentity = await ethers.getContractFactory("ArtistIdentity");
+  const artistIdentity = await ArtistIdentity.deploy();
+  await artistIdentity.deployed();
+  console.log("ArtistIdentity deployed to:", artistIdentity.address);
 
-  // Read parameters from base-sepolia.json if exists
-  const parametersPath = path.join(__dirname, "..", "ignition", "parameters", "base-sepolia.json");
-  let platformWallet = deployer.address;
-  let campaignCreationFee = "10000";
+  // Deploy CampaignRegistry
+  console.log("Deploying CampaignRegistry...");
+  const CampaignRegistry = await ethers.getContractFactory("CampaignRegistry");
+  const campaignRegistry = await CampaignRegistry.deploy(
+    mockIDRX.address,
+    artistIdentity.address
+  );
+  await campaignRegistry.deployed();
+  console.log("CampaignRegistry deployed to:", campaignRegistry.address);
 
-  if (fs.existsSync(parametersPath)) {
-    const parameters = JSON.parse(fs.readFileSync(parametersPath, "utf-8"));
-    platformWallet = parameters.DeployModule?.platformWallet || deployer.address;
-    // Use 0x0 address as fallback if needed
-    if (platformWallet === "0x0000000000000000000000000000000000000000") {
-      platformWallet = deployer.address;
-      console.log("⚠️  Using deployer address as platform wallet");
-    }
-    campaignCreationFee = parameters.DeployModule?.campaignCreationFee || "10000";
-  }
-
-  console.log("⚙️  Deployment Parameters:");
-  console.log("   Platform Wallet:", platformWallet);
   console.log("   Campaign Creation Fee:", campaignCreationFee, "(with 2 decimals)\n");
 
   // 1. Deploy MockIDRX

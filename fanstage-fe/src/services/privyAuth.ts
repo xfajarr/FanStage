@@ -2,10 +2,13 @@ import axios, { AxiosInstance } from 'axios';
 import { getAccessToken } from '@privy-io/react-auth';
 import { UserProfile, ArtistCategory } from '../types';
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001/api';
+
 // Create axios instance for API calls
-const createApiClient = (): AxiosInstance => {
+export const createApiClient = (): AxiosInstance => {
   const client = axios.create({
-    baseURL: 'http://localhost:3001/api',
+    baseURL: API_BASE_URL,
     timeout: 10000,
     headers: {
       'Content-Type': 'application/json',
@@ -41,9 +44,8 @@ const createApiClient = (): AxiosInstance => {
 
   return client;
 };
-
 // Create singleton instance
-const apiClient = createApiClient();
+export const apiClient = createApiClient();
 
 // User profile type is now imported from ../types
 
