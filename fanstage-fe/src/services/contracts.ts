@@ -168,7 +168,7 @@ export const useCreateCampaign = () => {
     
     const targetAmountWei = parseEther(targetAmount);
     
-    writeContract({
+    return writeContract({
       address: campaignRegistryConfig.address,
       abi: campaignRegistryConfig.abi,
       functionName: 'createCampaign',
@@ -200,6 +200,7 @@ export const useIdrxBalance = (address: `0x${string}`) => {
     ...mockIdrxConfig,
     functionName: 'balanceOf',
     args: [address],
+    watch: true,
   });
   
   return data ? formatEther(data as bigint) : '0';
@@ -210,6 +211,7 @@ export const useIdrxAllowance = (owner: `0x${string}`, spender: `0x${string}`) =
     ...mockIdrxConfig,
     functionName: 'allowance',
     args: [owner, spender],
+    watch: true,
   });
   
   return data ? formatEther(data as bigint) : '0';
@@ -219,6 +221,7 @@ export const useIdrxTotalSupply = () => {
   const { data } = useReadContract({
     ...mockIdrxConfig,
     functionName: 'totalSupply',
+    watch: true,
   });
   
   return data ? formatEther(data as bigint) : '0';

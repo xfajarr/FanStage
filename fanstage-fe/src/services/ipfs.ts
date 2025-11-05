@@ -12,6 +12,24 @@ export interface ArtistMetadata {
   createdAt: string;
 }
 
+export interface CampaignMetadata {
+  title: string;
+  summary: string;
+  story?: string;
+  coverImageUrl?: string;
+  fundingGoal: string;
+  fanSharePercent: number;
+  deadline: string;
+  artistAddress: string;
+  tiers: Array<{
+    name: string;
+    threshold: string;
+    profitPercent: number;
+    benefits: string;
+  }>;
+  createdAt: string;
+}
+
 type IpfsUploadResponse = {
   cid: string;
   ipfs_url?: string;
@@ -52,6 +70,20 @@ export const ipfsService = {
       return resolveIpfsUri(response);
     } catch (error) {
       console.error('Failed to upload artist metadata to IPFS:', error);
+      throw new Error('Failed to upload metadata to IPFS');
+    }
+  },
+
+  uploadCampaignMetadata: async (metadata: CampaignMetadata): Promise<string> => {
+    try {
+      const response = await apiClient.post<IpfsUploadResponse>(
+        '/ipfs/upload-json',
+        metadata
+      );
+
+      return resolveIpfsUri(response);
+    } catch (error) {
+      console.error('Failed to upload campaign metadata to IPFS:', error);
       throw new Error('Failed to upload metadata to IPFS');
     }
   },

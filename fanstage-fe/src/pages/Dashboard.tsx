@@ -1,24 +1,50 @@
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowUpRight, TrendingUp, Trophy, Wallet, Zap } from 'lucide-react';
+import { usePrivy } from '@privy-io/react-auth';
 import Navigation from '@/components/layout/Navigation';
 import { mockInvestments, mockNFTs, mockStakingPositions } from '@/data/mockData';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  TrendingUp, 
-  Wallet, 
-  Trophy, 
-  Zap,
-  ArrowUpRight,
-  ArrowDownRight
-} from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { privyApiClient } from '@/services/privyAuth';
+import type { UserProfile } from '@/types';
 
 export default function Dashboard() {
   const totalInvested = mockInvestments.reduce((sum, inv) => sum + inv.amount, 0);
   const totalEarned = mockInvestments.reduce((sum, inv) => sum + (inv.earnedProfit || 0), 0);
   const totalStaked = mockStakingPositions.reduce((sum, pos) => sum + pos.stakedAmount, 0);
   const totalYield = mockStakingPositions.reduce((sum, pos) => sum + pos.earnedYield, 0);
+  const { authenticated } = usePrivy();
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    if (!authenticated) {
+      setUserProfile(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const profile = await privyApiClient.getUserProfile();
+        if (!cancelled) {
+          setUserProfile(profile);
+        }
+      } catch (error) {
+        console.error('Failed to load dashboard profile:', error);
+        if (!cancelled) {
+          setUserProfile(null);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authenticated]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -26,9 +52,19 @@ export default function Dashboard() {
 
       <div className="container mx-auto px-4 py-12">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Dashboard</h1>
-          <p className="text-muted-foreground">Track your investments and rewards</p>
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-4xl font-bold mb-2">Dashboard</h1>
+            <p className="text-muted-foreground">Track your investments and rewards</p>
+          </div>
+
+          {userProfile?.role === 'artist' && (
+            <Link to="/create-campaign" className="inline-flex">
+              <Button className="rounded-lg gradient-primary text-primary-foreground">
+                + Create Campaign
+              </Button>
+            </Link>
+          )}
         </div>
 
         {/* Stats Grid */}

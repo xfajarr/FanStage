@@ -1,20 +1,25 @@
 import { Link } from 'react-router-dom';
-import { Campaign } from '@/types';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Clock, TrendingUp, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { CampaignListItem } from '@/services/campaigns';
 
 interface CampaignCardProps {
-  campaign: Campaign;
+  campaign: CampaignListItem;
   className?: string;
 }
 
 export default function CampaignCard({ campaign, className }: CampaignCardProps) {
-  const fundingPercentage = (campaign.currentFunding / campaign.fundingGoal) * 100;
-  const daysRemaining = Math.ceil(
-    (new Date(campaign.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+  const fundingGoal = Number(campaign.fundingGoal) || 0;
+  const currentFunding = Number(campaign.currentFunding) || 0;
+  const fundingPercentage = fundingGoal > 0 ? Math.min((currentFunding / fundingGoal) * 100, 100) : 0;
+  const daysRemaining = Math.max(
+    Math.ceil(
+      (new Date(campaign.endDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+    ),
+    0
   );
 
   const categoryColors = {
@@ -35,11 +40,17 @@ export default function CampaignCard({ campaign, className }: CampaignCardProps)
       >
         {/* Cover Image */}
         <div className="relative h-48 overflow-hidden">
-          <img
-            src={campaign.coverImage}
-            alt={campaign.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
+          {campaign.coverImage ? (
+            <img
+              src={campaign.coverImage}
+              alt={campaign.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+          ) : (
+            <div className="w-full h-full bg-muted flex items-center justify-center text-muted-foreground text-sm">
+              No cover image
+            </div>
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
           
           {/* Category Badge */}
@@ -65,12 +76,14 @@ export default function CampaignCard({ campaign, className }: CampaignCardProps)
           {/* Artist Info */}
           <div className="flex items-center gap-3 mb-4">
             <Avatar className="h-10 w-10 ring-2 ring-primary/20">
-              <AvatarImage src={campaign.artistAvatar} />
-              <AvatarFallback>{campaign.artistName[0]}</AvatarFallback>
+              <AvatarImage src={campaign.artistAvatar ?? ''} />
+              <AvatarFallback>
+                {campaign.artistName ? campaign.artistName[0]?.toUpperCase() : '?'}
+              </AvatarFallback>
             </Avatar>
             <div>
               <div className="text-sm text-muted-foreground">by</div>
-              <div className="font-semibold">{campaign.artistName}</div>
+              <div className="font-semibold">{campaign.artistName ?? 'Unknown Artist'}</div>
             </div>
           </div>
 
@@ -88,10 +101,10 @@ export default function CampaignCard({ campaign, className }: CampaignCardProps)
           <div className="mb-4">
             <div className="flex justify-between items-center mb-2">
               <span className="text-2xl font-bold text-primary">
-                ${campaign.currentFunding.toLocaleString()}
+                {currentFunding.toLocaleString()} IDRX
               </span>
               <span className="text-sm text-muted-foreground">
-                of ${campaign.fundingGoal.toLocaleString()}
+                of {fundingGoal.toLocaleString()} IDRX
               </span>
             </div>
             <Progress value={fundingPercentage} className="h-2" />
