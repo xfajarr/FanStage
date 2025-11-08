@@ -3,7 +3,6 @@ import { usePrivy } from '@privy-io/react-auth';
 import { useNavigate } from 'react-router-dom';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { baseSepolia } from 'wagmi/chains';
-import { formatEther } from 'viem';
 import { toast } from 'sonner';
 
 import { privyApiClient } from '@/services/privyAuth';
@@ -104,7 +103,7 @@ export const useCreateCampaignFlow = () => {
 
   const creationFee = useMemo(() => {
     if (creationFeeRaw && typeof creationFeeRaw === 'bigint') {
-      return formatEther(creationFeeRaw);
+      return (Number(creationFeeRaw) / 1e2).toFixed(2);
     }
     return '0';
   }, [creationFeeRaw]);

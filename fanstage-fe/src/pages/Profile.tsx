@@ -20,6 +20,7 @@ import {
   X,
 } from 'lucide-react';
 import { useProfilePage } from '@/features/profile/useProfilePage';
+import { useArtistProfile } from '@/services/contracts';
 
 export default function Profile() {
   const {
@@ -46,6 +47,21 @@ export default function Profile() {
     goToDashboard,
     goToRegisterArtist,
   } = useProfilePage();
+
+  // Fetch artist profile from blockchain for artists
+  const { data: artistProfile } = useArtistProfile(
+    userProfile?.role === 'artist' && userProfile?.walletAddress 
+      ? userProfile.walletAddress as `0x${string}`
+      : undefined as any
+  );
+
+  // Get display name - artist name for artists, username for fans
+  const getDisplayName = () => {
+    if (userProfile?.role === 'artist' && artistProfile?.name) {
+      return artistProfile.name;
+    }
+    return userProfile?.username || 'Not set';
+  };
 
   if (!isAuthenticated) {
     return (
@@ -156,7 +172,8 @@ export default function Profile() {
             </CardHeader>
 
             <CardContent className="p-6 space-y-6">
-              {userProfile?.profileImageUrl ? (
+              {/* Profile Image - Only show for artists */}
+              {userProfile?.role === 'artist' && userProfile?.profileImageUrl ? (
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-muted-foreground">Profile Image</Label>
                   <div className="flex items-center gap-4">
@@ -171,11 +188,12 @@ export default function Profile() {
 
               {userProfile ? (
                 <div className="space-y-6">
+                  {/* Basic Profile Information - Always shown */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                         <User className="h-4 w-4" />
-                        Username
+                        {userProfile.role === 'artist' ? 'Artist Name' : 'Username'}
                       </Label>
                       {isEditing ? (
                         <Input
@@ -187,7 +205,7 @@ export default function Profile() {
                         />
                       ) : (
                         <p className="font-medium">
-                          {userProfile.username || <span className="text-muted-foreground">Not set</span>}
+                          {getDisplayName() || <span className="text-muted-foreground">Not set</span>}
                         </p>
                       )}
                     </div>
@@ -240,29 +258,60 @@ export default function Profile() {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-muted-foreground">Bio</Label>
-                    {isEditing ? (
-                      <Textarea
-                        value={formState.bio}
-                        onChange={(event) => handleInputChange('bio', event.target.value)}
-                        placeholder="Tell us about yourself..."
-                        className="rounded-lg resize-none"
-                        rows={3}
-                        maxLength={1000}
-                      />
-                    ) : (
-                      <p className="text-sm leading-relaxed bg-muted/30 p-4 rounded-lg border border-border/50">
-                        {userProfile.bio || <span className="text-muted-foreground">No bio added yet</span>}
-                      </p>
-                    )}
-                  </div>
+                  {/* Fan-specific sections */}
+                  {userProfile.role === 'fan' && (
+                    <>
+                      {/* Notice for fans with draft artist data */}
+                      {(userProfile.bio || userProfile.socialMediaLinks) ? (
+                        <div className="bg-gradient-to-r from-yellow-50 to-yellow-100 border border-yellow-300 rounded-lg p-4"> 
+                          <h3 className="text-sm font-medium text-yellow-900">Draft Artist Information Available</h3>
+                          <p className="mt-1 text-sm text-yellow-700">
+                            You have saved artist profile information. Complete your artist registration to make it active.
+                          </p>
+                        </div>
+                      ) : (
+                        /* Clean fan profile for new users */
+                        <div className="bg-gradient-to-r from-orange-50 to-primary/5 border border-primary/20 rounded-lg p-6">
+                          <div className="text-center">
+                            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                              <User className="h-6 w-6 text-primary" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Welcome to FanStage!</h3>
+                            <p className="text-gray-600 mb-4">
+                              Ready to take your creative journey to the next level? Join our community of artists and unlock new funding opportunities.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
 
-                  <div className="space-y-4">
-                    <Label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                      <Link2 className="h-4 w-4" />
-                      Social Media
-                    </Label>
+                  {/* Artist-specific sections - Only show for artists */}
+                  {userProfile.role === 'artist' && (
+                    <>
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium text-muted-foreground">Bio</Label>
+                        {isEditing ? (
+                          <Textarea
+                            value={formState.bio}
+                            onChange={(event) => handleInputChange('bio', event.target.value)}
+                            placeholder="Tell us about yourself..."
+                            className="rounded-lg resize-none"
+                            rows={3}
+                            maxLength={1000}
+                          />
+                        ) : (
+                          <p className="text-sm leading-relaxed bg-muted/30 p-4 rounded-lg border border-border/50">
+                            {userProfile.bio || <span className="text-muted-foreground">No bio added yet</span>}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="space-y-4">
+                        <Label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                          <Link2 className="h-4 w-4" />
+                          Social Media
+                        </Label>
 
                     <div className="space-y-2">
                       <Label className="text-sm text-muted-foreground flex items-center gap-2">
@@ -385,8 +434,11 @@ export default function Profile() {
                         </div>
                       )}
                     </div>
-                  </div>
+                      </div>
+                    </>
+                  )}
 
+                  {/* Member Since - Always shown */}
                   <div className="flex items-center gap-2 text-sm text-muted-foreground pt-4 border-t border-border/50">
                     <Calendar className="h-4 w-4" />
                     <span>

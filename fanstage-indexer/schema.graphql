@@ -1,0 +1,48 @@
+# Enhanced Schema for FanStage Campaigns
+# Includes event data + enriched campaign data from contract calls
+
+type ArtistIdentity_ArtistRegistered {
+  id: ID! # Format: {chainId}_{blockNumber}_{logIndex}
+
+  # Event Parameters (from ArtistRegistered event)
+  artist: String! # Artist wallet address (indexed, lowercase)
+  tokenId: BigInt! # ERC721 token ID for the artist
+  name: String! # Artist display name
+
+  # Event Metadata
+  blockNumber: BigInt! # Block number when artist was registered
+  blockTimestamp: BigInt! # Unix timestamp of block
+  transactionHash: String! # Transaction hash of registration
+}
+
+type CampaignRegistry_CampaignCreated {
+  id: ID! # Format: {chainId}_{blockNumber}_{logIndex}
+
+  # Event Parameters (from CampaignCreated event)
+  campaignId: BigInt! # uint256 campaign ID from registry
+  artist: String! # Artist wallet address (indexed, lowercase)
+  campaignContract: String! # Deployed campaign contract address (lowercase)
+
+  # Enriched Campaign Data (fetched from campaign contract via campaignData())
+  ipfsHash: String # IPFS hash containing campaign metadata
+  targetAmount: BigInt # Target funding amount in wei
+  totalRaised: BigInt # Current funding amount in wei
+  deadline: BigInt # Unix timestamp when campaign ends
+  funderSharePercent: BigInt # Percentage share allocated to funders
+  status: String # Campaign status: "Active", "Succeeded", "Failed"
+
+  # IPFS Metadata (fetched from IPFS)
+  title: String # Campaign title from IPFS
+  summary: String # Short description from IPFS
+  story: String # Long description from IPFS
+  coverImageUrl: String # Cover image URL from IPFS
+
+  # Calculated/Derived Fields
+  fundingProgress: BigInt # Progress percentage (totalRaised * 100 / targetAmount)
+  isActive: Boolean # Whether campaign is currently active (deadline not passed + status Active)
+
+  # Event Metadata
+  blockNumber: BigInt! # Block number when campaign was created
+  blockTimestamp: BigInt! # Unix timestamp of block
+  transactionHash: String! # Transaction hash of creation
+}

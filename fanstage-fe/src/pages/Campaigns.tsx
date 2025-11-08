@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Loader2, ArrowUpRight, Users } from 'lucide-react';
+import { Loader2, ArrowUpRight, Users, Music } from 'lucide-react';
 import Navigation from '@/components/layout/Navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -133,53 +133,89 @@ export default function Campaigns() {
             {filteredCampaigns.map((campaign) => (
               <Card
                 key={campaign.id}
-                className="p-6 space-y-4 hover:border-primary/50 transition-all hover-lift"
+                className="overflow-hidden hover:border-primary/50 transition-all hover-lift"
               >
-                <div className="space-y-2">
-                  <Badge variant="outline" className="text-xs uppercase px-2 py-1 rounded-full">
-                    {campaign.category || 'Campaign'}
-                  </Badge>
-                  <Link to={`/campaigns/${campaign.id}`}>
-                    <h3 className="text-xl font-semibold hover:text-primary transition-colors">
-                      {campaign.title}
-                    </h3>
-                  </Link>
-                  <p className="text-sm text-muted-foreground line-clamp-2">{campaign.description}</p>
-                </div>
-
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Users className="h-4 w-4" />
-                    <span>{campaign.artistName ?? 'Unknown Artist'}</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div>
-                      <div className="text-xs text-muted-foreground">Funding Goal</div>
-                      <div className="font-semibold">{formatCurrency(campaign.fundingGoal)} IDRX</div>
+                {/* Cover Image Section */}
+                <Link to={`/campaigns/${campaign.id}`}>
+                  <div className="aspect-video relative overflow-hidden bg-muted">
+                    {campaign.coverImage ? (
+                      <img
+                        src={campaign.coverImage}
+                        alt={campaign.title}
+                        className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                        <Music className="h-16 w-16 text-primary/30" />
+                      </div>
+                    )}
+                    {/* Category Badge Overlay */}
+                    <div className="absolute top-3 right-3">
+                      <Badge className="bg-background/90 backdrop-blur-sm text-foreground border-border shadow-md">
+                        {campaign.category || 'Music'}
+                      </Badge>
                     </div>
-                    <div>
-                      <div className="text-xs text-muted-foreground">Raised</div>
-                      <div className="font-semibold">
-                        {formatCurrency(campaign.currentFunding)} IDRX
+                    {/* Status Badge Overlay */}
+                    <div className="absolute top-3 left-3">
+                      <Badge
+                        variant={
+                          campaign.status === 'Active' ? 'default' :
+                          campaign.status === 'Funded' ? 'default' :
+                          campaign.status === 'Completed' ? 'default' :
+                          'secondary'
+                        }
+                        className="backdrop-blur-sm shadow-md"
+                      >
+                        {campaign.status}
+                      </Badge>
+                    </div>
+                  </div>
+                </Link>
+
+                {/* Card Content */}
+                <div className="p-6 space-y-4">
+                  <div className="space-y-2">
+                    <Link to={`/campaigns/${campaign.id}`}>
+                      <h3 className="text-xl font-semibold hover:text-primary transition-colors line-clamp-1">
+                        {campaign.title}
+                      </h3>
+                    </Link>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{campaign.description}</p>
+                  </div>
+
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Users className="h-4 w-4" />
+                      <span className="line-clamp-1">{campaign.artistName ?? 'Unknown Artist'}</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div>
+                        <div className="text-xs text-muted-foreground">Funding Goal</div>
+                        <div className="font-semibold">{formatCurrency(campaign.fundingGoal)} IDRX</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-muted-foreground">Raised</div>
+                        <div className="font-semibold">
+                          {formatCurrency(campaign.currentFunding)} IDRX
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>
-                    Supporter Share: <strong>{campaign.profitShare.fan}%</strong>
-                  </span>
-                  <span>Status: <strong className="capitalize">{campaign.status}</strong></span>
-                </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>
+                      Supporter Share: <strong>{campaign.profitShare.fan}%</strong>
+                    </span>
+                  </div>
 
-                <div className="flex gap-2 pt-2">
-                  <Link to={`/campaigns/${campaign.id}`} className="flex-1">
-                    <Button className="w-full rounded-lg gradient-primary text-primary-foreground">
-                      View Campaign
-                      <ArrowUpRight className="ml-2 h-3 w-3" />
-                    </Button>
-                  </Link>
+                  <div className="flex gap-2 pt-2">
+                    <Link to={`/campaigns/${campaign.id}`} className="flex-1">
+                      <Button className="w-full rounded-lg gradient-primary text-primary-foreground">
+                        View Campaign
+                        <ArrowUpRight className="ml-2 h-3 w-3" />
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               </Card>
             ))}

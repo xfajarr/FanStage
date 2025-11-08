@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+name: fanstage-indexer
+networks:
+- id: 84532
+  start_block: 33374915  
+  contracts:
+  - name: ArtistIdentity
+    address:
+    - 0x3C598dc2040ce89feE45058d539E484F17FCda7d
+    handler: src/EventHandlers.ts
+    events:
+    - event: ArtistRegistered(address indexed artist, uint256 indexed tokenId, string name)
+  - name: CampaignRegistry
+    address:
+    - 0x77443c8A5CFF097dF2ea058240C6e732262dFA8f
+    handler: src/EventHandlers.ts
+    events:
+    - event: CampaignCreated(uint256 indexed campaignId, address indexed artist, address campaignContract)
+unordered_multichain_mode: true
+preload_handlers: true

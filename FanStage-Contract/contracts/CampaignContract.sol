@@ -225,22 +225,19 @@ contract CampaignContract is
         emit RefundClaimed(msg.sender, tokenBalance);
     }
 
-    function submitRevenue(
-        uint256 revenueAmount
-    ) external onlyOwner nonReentrant {
+    function submitRevenue() external onlyOwner nonReentrant {
         if (campaignData.status != CampaignStatus.FUNDED) {
             revert InvalidStatus();
         }
-        if (revenueAmount == 0) revert InvalidAmount();
-        if (!IDRX.transferFrom(msg.sender, address(this), revenueAmount)) {
-            revert TransferFailed();
-        }
 
-        campaignData.totalRevenue = revenueAmount;
+        uint256 totalRaised = IDRX.balanceOf(address(this));
+        if (totalRaised == 0) revert InvalidAmount();
+
+        campaignData.totalRevenue = totalRaised;
         campaignData.status = CampaignStatus.COMPLETED;
 
-        uint256 funderPool = (revenueAmount * campaignData.funderSharePercent) / 100;
-        uint256 artistShare = revenueAmount - funderPool;
+        uint256 funderPool = (totalRaised * campaignData.funderSharePercent) / 100;
+        uint256 artistShare = totalRaised - funderPool;
 
         uint256 totalWeighted = 0;
         for (uint256 i = 0; i < funders.length; i++) {
@@ -265,7 +262,7 @@ contract CampaignContract is
             revert TransferFailed();
         }
 
-        emit RevenueSubmitted(revenueAmount);
+        emit RevenueSubmitted(totalRaised);
         emit RevenueDistributed(campaignData.artist, artistShare, funderPool);
     }
 
@@ -277,7 +274,7 @@ contract CampaignContract is
                 return tiers[tierIndex].profitPercent;
             }
         }
-        return tiers[0].profitPercent;
+        return 0;
     }
 
     function claimRevenue() external nonReentrant {

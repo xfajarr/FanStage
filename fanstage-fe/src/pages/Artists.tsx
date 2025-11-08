@@ -91,7 +91,7 @@ export default function Artists() {
                     className="flex-1 rounded-lg"
                     onClick={() =>
                       window.open(
-                        `https://basescan.org/address/${artist.address}`,
+                        `https://sepolia.basescan.org/address/${artist.address}`,
                         '_blank',
                         'noopener,noreferrer'
                       )
