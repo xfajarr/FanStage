@@ -41,6 +41,7 @@ export type Tier = {
   threshold: string;
   profitPercent: number;
   benefits: string;
+  imageUrl: string;
 };
 
 export const useIsRegisteredArtist = (artistAddress: `0x${string}`) => {

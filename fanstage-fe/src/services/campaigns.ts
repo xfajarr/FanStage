@@ -139,11 +139,15 @@ export const campaignsApi = {
    */
   getCampaigns: async (params?: Record<string, string | number | undefined>) => {
     try {
-      // Fetch campaigns and artists in parallel
+      console.log('🔍 Attempting to fetch campaigns from backend API (indexer integration in progress)...');
+
+      // TODO: Switch back to indexer once GraphQL endpoint is properly configured
+     
       const [campaignsData, artistsData] = await Promise.all([
         graphqlQuery<GetAllCampaignsResponse>(CAMPAIGN_QUERIES.GET_ALL_CAMPAIGNS),
         graphqlQuery<GetAllArtistsResponse>(ARTIST_QUERIES.GET_ALL_ARTISTS),
       ]);
+      console.log('✅ Successfully fetched from indexer:', { campaignsData, artistsData });
 
       // Create a map of artist addresses to names for quick lookup
       const artistMap = new Map<string, string>();
@@ -175,8 +179,9 @@ export const campaignsApi = {
         },
       };
     } catch (error) {
-      console.error('Error fetching campaigns from indexer:', error);
-      // Fallback to empty result
+      console.error('❌ Error fetching campaigns from backend API:', error);
+      
+      // Return helpful message instead of empty result
       return {
         campaigns: [],
         pagination: { page: 1, limit: 0, total: 0 },

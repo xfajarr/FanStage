@@ -116,9 +116,9 @@ export default function Navigation() {
                   </Button>
                 </Link>
               )}
-              <Link to="/portfolio">
+              <Link to="/exchange">
                   <Button variant="outline" size="sm" className="rounded-lg">
-                    Portfolio
+                    Exchange
                   </Button>
                 </Link>
                 <NetworkSwitch />
@@ -180,13 +180,13 @@ export default function Navigation() {
                     <div className="w-full mb-2">
                       <NetworkSwitch />
                     </div>
-                    <Link to="/portfolio">
+                    <Link to="/exchange">
                       <Button
                         variant="outline"
                         className="w-full mb-2 rounded-lg"
                         onClick={() => setMobileMenuOpen(false)}
                       >
-                        Portfolio
+                        Exchange
                       </Button>
                     </Link>
                     <div className="flex items-center justify-between p-2 bg-muted rounded-lg mb-2">

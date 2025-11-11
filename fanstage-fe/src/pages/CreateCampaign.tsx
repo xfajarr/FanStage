@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
+import ImageUpload from '@/components/ui/image-upload';
 import useCreateCampaignFlow from '@/features/campaigns/useCreateCampaignFlow';
 
 export default function CreateCampaign() {
@@ -143,16 +144,16 @@ export default function CreateCampaign() {
                 </div>
 
                 <div>
-                  <Label htmlFor="coverImageUrl">Cover Image URL</Label>
-                  <Input
-                    id="coverImageUrl"
+                  <Label htmlFor="coverImageUrl">Cover Image</Label>
+                  <ImageUpload
                     value={formState.coverImageUrl}
-                    onChange={(event) => updateFormField('coverImageUrl', event.target.value)}
-                    placeholder="https://..."
-                    className="rounded-lg"
+                    onChange={(url) => updateFormField('coverImageUrl', url)}
+                    disabled={isSubmitting || isUploadingToIPFS}
+                    maxSize={10}
+                    id="cover-image-upload"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Provide an accessible image URL (IPFS or HTTPS). Optional but recommended.
+                    Upload an image or provide a URL. Automatically uploaded to IPFS for decentralized storage.
                   </p>
                 </div>
               </div>
@@ -338,6 +339,21 @@ export default function CreateCampaign() {
                         required
                         className="rounded-lg min-h-24"
                       />
+                    </div>
+
+                    <div>
+                      <Label>Tier Badge Image</Label>
+                      <ImageUpload
+                        value={tier.imageUrl}
+                        onChange={(url) => updateTierField(index, 'imageUrl', url)}
+                        disabled={isSubmitting || isUploadingToIPFS}
+                        maxSize={5}
+                        id={`tier-image-${index}`}
+                        compact={true}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Upload an image for this tier's NFT badge. Optional but recommended.
+                      </p>
                     </div>
                   </Card>
                 ))}

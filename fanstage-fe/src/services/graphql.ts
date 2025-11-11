@@ -3,7 +3,7 @@
  * Fetches blockchain data from the indexer instead of backend API
  */
 
-const GRAPHQL_ENDPOINT = import.meta.env.VITE_GRAPHQL_ENDPOINT || 'http://localhost:8080/v1/graphql';
+const GRAPHQL_ENDPOINT = import.meta.env.VITE_GRAPHQL_ENDPOINT || 'http://localhost:8081/v1/graphql';
 
 export interface GraphQLResponse<T> {
   data?: T;
@@ -234,4 +234,451 @@ export interface GetAllArtistsResponse {
 
 export interface GetArtistByAddressResponse {
   ArtistIdentity_ArtistRegistered: IndexedArtist[];
+}
+
+/**
+ * GraphQL Queries for Fan Activity Data
+ */
+export const FAN_QUERIES = {
+  // Get all investments by a fan
+  GET_FAN_INVESTMENTS: `
+    query GetFanInvestments($funder: String!) {
+      CampaignContract_FundingReceived(
+        where: { funder: { _eq: $funder } }
+        order_by: { blockTimestamp: desc }
+      ) {
+        id
+        funder
+        amount
+        tier
+        tokenId
+        campaignContract
+        campaignId
+        blockNumber
+        blockTimestamp
+        transactionHash
+      }
+    }
+  `,
+
+  // Get all tier badges earned by a fan
+  GET_FAN_BADGES: `
+    query GetFanBadges($funder: String!) {
+      CampaignContract_TierBadgeMinted(
+        where: { funder: { _eq: $funder } }
+        order_by: { blockTimestamp: desc }
+      ) {
+        id
+        funder
+        tierId
+        tierName
+        campaignContract
+        campaignId
+        blockNumber
+        blockTimestamp
+        transactionHash
+      }
+    }
+  `,
+
+  // Get all revenue claims by a fan
+  GET_FAN_REVENUE_CLAIMS: `
+    query GetFanRevenueClaims($funder: String!) {
+      CampaignContract_RevenueClaimed(
+        where: { funder: { _eq: $funder } }
+        order_by: { blockTimestamp: desc }
+      ) {
+        id
+        funder
+        amount
+        campaignContract
+        campaignId
+        blockNumber
+        blockTimestamp
+        transactionHash
+      }
+    }
+  `,
+
+  // Get all refunds claimed by a fan
+  GET_FAN_REFUNDS: `
+    query GetFanRefunds($funder: String!) {
+      CampaignContract_RefundClaimed(
+        where: { funder: { _eq: $funder } }
+        order_by: { blockTimestamp: desc }
+      ) {
+        id
+        funder
+        amount
+        campaignContract
+        campaignId
+        blockNumber
+        blockTimestamp
+        transactionHash
+      }
+    }
+  `,
+
+  // Get comprehensive fan activity (investments + badges + claims)
+  GET_FAN_ACTIVITY: `
+    query GetFanActivity($funder: String!) {
+      investments: CampaignContract_FundingReceived(
+        where: { funder: { _eq: $funder } }
+        order_by: { blockTimestamp: desc }
+      ) {
+        id
+        amount
+        tier
+        tokenId
+        campaignContract
+        campaignId
+        blockTimestamp
+        transactionHash
+      }
+      badges: CampaignContract_TierBadgeMinted(
+        where: { funder: { _eq: $funder } }
+        order_by: { blockTimestamp: desc }
+      ) {
+        id
+        tierId
+        tierName
+        campaignContract
+        campaignId
+        blockTimestamp
+        transactionHash
+      }
+      revenueClaims: CampaignContract_RevenueClaimed(
+        where: { funder: { _eq: $funder } }
+        order_by: { blockTimestamp: desc }
+      ) {
+        id
+        amount
+        campaignContract
+        campaignId
+        blockTimestamp
+        transactionHash
+      }
+      refunds: CampaignContract_RefundClaimed(
+        where: { funder: { _eq: $funder } }
+        order_by: { blockTimestamp: desc }
+      ) {
+        id
+        amount
+        campaignContract
+        campaignId
+        blockTimestamp
+        transactionHash
+      }
+    }
+  `,
+};
+
+/**
+ * Fan Activity Response Types
+ */
+export interface IndexedFundingReceived {
+  id: string;
+  funder: string;
+  amount: string;
+  tier: number;
+  tokenId: string;
+  campaignContract: string;
+  campaignId: string | null;
+  blockNumber: string;
+  blockTimestamp: string;
+  transactionHash: string;
+}
+
+export interface IndexedTierBadge {
+  id: string;
+  funder: string;
+  tierId: string;
+  tierName: string;
+  campaignContract: string;
+  campaignId: string | null;
+  blockNumber: string;
+  blockTimestamp: string;
+  transactionHash: string;
+}
+
+export interface IndexedRevenueClaim {
+  id: string;
+  funder: string;
+  amount: string;
+  campaignContract: string;
+  campaignId: string | null;
+  blockNumber: string;
+  blockTimestamp: string;
+  transactionHash: string;
+}
+
+export interface IndexedRefund {
+  id: string;
+  funder: string;
+  amount: string;
+  campaignContract: string;
+  campaignId: string | null;
+  blockNumber: string;
+  blockTimestamp: string;
+  transactionHash: string;
+}
+
+export interface GetFanInvestmentsResponse {
+  CampaignContract_FundingReceived: IndexedFundingReceived[];
+}
+
+export interface GetFanBadgesResponse {
+  CampaignContract_TierBadgeMinted: IndexedTierBadge[];
+}
+
+export interface GetFanRevenueClaimsResponse {
+  CampaignContract_RevenueClaimed: IndexedRevenueClaim[];
+}
+
+export interface GetFanRefundsResponse {
+  CampaignContract_RefundClaimed: IndexedRefund[];
+}
+
+export interface GetFanActivityResponse {
+  investments: IndexedFundingReceived[];
+  badges: IndexedTierBadge[];
+  revenueClaims: IndexedRevenueClaim[];
+  refunds: IndexedRefund[];
+}
+
+/**
+ * GraphQL Queries for Artist Token Holdings
+ */
+export const TOKEN_QUERIES = {
+  // Get artist token holdings by fan (tokens received via minting)
+  GET_FAN_TOKEN_HOLDINGS: `
+    query GetFanTokenHoldings($fanAddress: String!) {
+      ArtistToken_Transfer(
+        where: { 
+          to: { _eq: $fanAddress }
+          from: { _eq: "0x0000000000000000000000000000000000000000" }
+        }
+        order_by: { blockTimestamp: desc }
+      ) {
+        id
+        from
+        to
+        value
+        artistToken
+        campaignContract
+        campaignId
+        tokenName
+        tokenSymbol
+        blockNumber
+        blockTimestamp
+        transactionHash
+      }
+    }
+  `,
+
+  // Get artist token transfers for a specific fan (includes burns/transfers out)
+  GET_FAN_TOKEN_TRANSFERS: `
+    query GetFanTokenTransfers($fanAddress: String!) {
+      ArtistToken_Transfer(
+        where: { 
+          _or: [
+            { from: { _eq: $fanAddress } }
+            { to: { _eq: $fanAddress } }
+          ]
+        }
+        order_by: { blockTimestamp: desc }
+      ) {
+        id
+        from
+        to
+        value
+        artistToken
+        campaignContract
+        campaignId
+        tokenName
+        tokenSymbol
+        blockNumber
+        blockTimestamp
+        transactionHash
+      }
+    }
+  `,
+
+  // Get all tokens for a specific artist (by campaign contracts they own)
+  GET_ARTIST_TOKENS: `
+    query GetArtistTokens($campaignContracts: [String!]!) {
+      ArtistToken_Transfer(
+        where: { 
+          campaignContract: { _in: $campaignContracts }
+          from: { _eq: "0x0000000000000000000000000000000000000000" }
+        }
+        order_by: { blockTimestamp: desc }
+      ) {
+        id
+        to
+        value
+        artistToken
+        campaignContract
+        campaignId
+        tokenName
+        tokenSymbol
+        blockNumber
+        blockTimestamp
+        transactionHash
+      }
+    }
+  `,
+
+  // Get token supply for specific artist tokens
+  GET_TOKEN_SUPPLY: `
+    query GetTokenSupply($artistTokens: [String!]!) {
+      mints: ArtistToken_Transfer(
+        where: { 
+          artistToken: { _in: $artistTokens }
+          from: { _eq: "0x0000000000000000000000000000000000000000" }
+        }
+      ) {
+        artistToken
+        tokenName
+        tokenSymbol
+        value
+      }
+      burns: ArtistToken_Transfer(
+        where: { 
+          artistToken: { _in: $artistTokens }
+          to: { _eq: "0x0000000000000000000000000000000000000000" }
+        }
+      ) {
+        artistToken
+        value
+      }
+    }
+  `,
+};
+
+/**
+ * Artist Token Response Types
+ */
+export interface IndexedTokenTransfer {
+  id: string;
+  from: string;
+  to: string;
+  value: string;
+  artistToken: string;
+  campaignContract: string | null;
+  campaignId: string | null;
+  tokenName: string | null;
+  tokenSymbol: string | null;
+  blockNumber: string;
+  blockTimestamp: string;
+  transactionHash: string;
+}
+
+export interface GetFanTokenHoldingsResponse {
+  ArtistToken_Transfer: IndexedTokenTransfer[];
+}
+
+export interface GetFanTokenTransfersResponse {
+  ArtistToken_Transfer: IndexedTokenTransfer[];
+}
+
+export interface GetArtistTokensResponse {
+  ArtistToken_Transfer: IndexedTokenTransfer[];
+}
+
+export interface GetTokenSupplyResponse {
+  mints: IndexedTokenTransfer[];
+  burns: IndexedTokenTransfer[];
+}
+
+/**
+ * GraphQL Queries for IDRX On/Off-Ramp Events
+ */
+export const IDRX_QUERIES = {
+  // Get all on-ramp transactions for a user
+  GET_USER_ONRAMP_HISTORY: `
+    query GetUserOnRampHistory($userAddress: String!) {
+      MockIDRX_OnRamp(
+        where: { user: { _eq: $userAddress } }
+        order_by: { blockTimestamp: desc }
+      ) {
+        id
+        user
+        amount
+        blockNumber
+        blockTimestamp
+        transactionHash
+      }
+    }
+  `,
+
+  // Get all off-ramp transactions for a user
+  GET_USER_OFFRAMP_HISTORY: `
+    query GetUserOffRampHistory($userAddress: String!) {
+      MockIDRX_OffRamp(
+        where: { user: { _eq: $userAddress } }
+        order_by: { blockTimestamp: desc }
+      ) {
+        id
+        user
+        amount
+        blockNumber
+        blockTimestamp
+        transactionHash
+      }
+    }
+  `,
+
+  // Get combined on/off-ramp history for a user
+  GET_USER_IDRX_HISTORY: `
+    query GetUserIDRXHistory($userAddress: String!) {
+      onRamps: MockIDRX_OnRamp(
+        where: { user: { _eq: $userAddress } }
+        order_by: { blockTimestamp: desc }
+      ) {
+        id
+        user
+        amount
+        blockNumber
+        blockTimestamp
+        transactionHash
+      }
+      offRamps: MockIDRX_OffRamp(
+        where: { user: { _eq: $userAddress } }
+        order_by: { blockTimestamp: desc }
+      ) {
+        id
+        user
+        amount
+        blockNumber
+        blockTimestamp
+        transactionHash
+      }
+    }
+  `,
+};
+
+/**
+ * IDRX Transaction Response Types
+ */
+export interface IndexedIDRXTransaction {
+  id: string;
+  user: string;
+  amount: string;
+  blockNumber: string;
+  blockTimestamp: string;
+  transactionHash: string;
+}
+
+export interface GetUserOnRampHistoryResponse {
+  MockIDRX_OnRamp: IndexedIDRXTransaction[];
+}
+
+export interface GetUserOffRampHistoryResponse {
+  MockIDRX_OffRamp: IndexedIDRXTransaction[];
+}
+
+export interface GetUserIDRXHistoryResponse {
+  onRamps: IndexedIDRXTransaction[];
+  offRamps: IndexedIDRXTransaction[];
 }

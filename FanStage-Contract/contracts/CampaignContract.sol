@@ -54,7 +54,8 @@ contract CampaignContract is
         address indexed artist,
         string artistTokenName,
         uint256 targetAmount,
-        uint256 deadline
+        uint256 deadline,
+        ArtistToken artistTokenAddress
     );
 
     event TierBadgeMinted(
@@ -99,6 +100,7 @@ contract CampaignContract is
             string(abi.encodePacked("FANT-", _artistTokenName)),
             address(this)
         );
+        
         artistTokenName = _artistTokenName;
 
         campaignData = CampaignData({
@@ -136,7 +138,8 @@ contract CampaignContract is
             _artist,
             _artistTokenName,
             _targetAmount,
-            _deadline
+            _deadline,
+            artistToken
         );
     }
 

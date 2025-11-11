@@ -46,3 +46,179 @@ type CampaignRegistry_CampaignCreated {
   blockTimestamp: BigInt! # Unix timestamp of block
   transactionHash: String! # Transaction hash of creation
 }
+
+# Fan Activity Events from CampaignContract
+
+type CampaignContract_FundingReceived {
+  id: ID! # Format: {chainId}_{blockNumber}_{logIndex}
+
+  # Event Parameters
+  funder: String! # Fan wallet address (indexed, lowercase)
+  amount: BigInt! # Investment amount in wei
+  tier: Int! # Tier level achieved (0-5)
+  tokenId: BigInt! # NFT token ID received
+
+  # Contract Context
+  campaignContract: String! # Campaign contract address
+  campaignId: BigInt # Campaign ID (derived from registry lookup)
+
+  # Event Metadata
+  blockNumber: BigInt! # Block number
+  blockTimestamp: BigInt! # Unix timestamp
+  transactionHash: String! # Transaction hash
+}
+
+type CampaignContract_TierBadgeMinted {
+  id: ID! # Format: {chainId}_{blockNumber}_{logIndex}
+
+  # Event Parameters
+  funder: String! # Fan wallet address (indexed, lowercase)
+  tierId: BigInt! # Badge tier ID (2-5 for Bronze-Platinum)
+  tierName: String! # "Bronze", "Silver", "Gold", "Platinum"
+
+  # Contract Context
+  campaignContract: String! # Campaign contract address
+  campaignId: BigInt # Campaign ID (derived from registry lookup)
+
+  # Event Metadata
+  blockNumber: BigInt! # Block number
+  blockTimestamp: BigInt! # Unix timestamp
+  transactionHash: String! # Transaction hash
+}
+
+type CampaignContract_RevenueClaimed {
+  id: ID! # Format: {chainId}_{blockNumber}_{logIndex}
+
+  # Event Parameters
+  funder: String! # Fan wallet address (indexed, lowercase)
+  amount: BigInt! # Revenue amount claimed in wei
+
+  # Contract Context
+  campaignContract: String! # Campaign contract address
+  campaignId: BigInt # Campaign ID (derived from registry lookup)
+
+  # Event Metadata
+  blockNumber: BigInt! # Block number
+  blockTimestamp: BigInt! # Unix timestamp
+  transactionHash: String! # Transaction hash
+}
+
+type CampaignContract_RefundClaimed {
+  id: ID! # Format: {chainId}_{blockNumber}_{logIndex}
+
+  # Event Parameters
+  funder: String! # Fan wallet address (indexed, lowercase)
+  amount: BigInt! # Refund amount in wei
+
+  # Contract Context
+  campaignContract: String! # Campaign contract address
+  campaignId: BigInt # Campaign ID (derived from registry lookup)
+
+  # Event Metadata
+  blockNumber: BigInt! # Block number
+  blockTimestamp: BigInt! # Unix timestamp
+  transactionHash: String! # Transaction hash
+}
+
+type CampaignContract_RevenueSubmitted {
+  id: ID! # Format: {chainId}_{blockNumber}_{logIndex}
+
+  # Event Parameters
+  revenueAmount: BigInt! # Total revenue submitted in wei
+
+  # Contract Context
+  campaignContract: String! # Campaign contract address
+  campaignId: BigInt # Campaign ID (derived from registry lookup)
+
+  # Event Metadata
+  blockNumber: BigInt! # Block number
+  blockTimestamp: BigInt! # Unix timestamp
+  transactionHash: String! # Transaction hash
+}
+
+type CampaignContract_RevenueDistributed {
+  id: ID! # Format: {chainId}_{blockNumber}_{logIndex}
+
+  # Event Parameters
+  artist: String! # Artist wallet address (indexed, lowercase)
+  artistShare: BigInt! # Artist's revenue share in wei
+  funderPoolAmount: BigInt! # Total pool for funders in wei
+
+  # Contract Context
+  campaignContract: String! # Campaign contract address
+  campaignId: BigInt # Campaign ID (derived from registry lookup)
+
+  # Event Metadata
+  blockNumber: BigInt! # Block number
+  blockTimestamp: BigInt! # Unix timestamp
+  transactionHash: String! # Transaction hash
+}
+
+type CampaignContract_CampaignFunded {
+  id: ID! # Format: {chainId}_{blockNumber}_{logIndex}
+
+  # Event Parameters
+  totalRaised: BigInt! # Total amount raised when target reached
+
+  # Contract Context
+  campaignContract: String! # Campaign contract address
+  campaignId: BigInt # Campaign ID (derived from registry lookup)
+
+  # Event Metadata
+  blockNumber: BigInt! # Block number
+  blockTimestamp: BigInt! # Unix timestamp
+  transactionHash: String! # Transaction hash
+}
+
+# Artist Token Events (ERC20 Transfer events from dynamically created ArtistToken contracts)
+
+type ArtistToken_Transfer {
+  id: ID! # Format: {chainId}_{blockNumber}_{logIndex}
+
+  # Event Parameters (ERC20 Transfer)
+  from: String! # Sender address (indexed, lowercase) - 0x0 for minting
+  to: String! # Recipient address (indexed, lowercase) - 0x0 for burning  
+  value: BigInt! # Token amount transferred (2 decimals for IDRX)
+
+  # Contract Context
+  artistToken: String! # ArtistToken contract address
+  campaignContract: String # Associated campaign contract (derived)
+  campaignId: BigInt # Campaign ID (derived from campaign lookup)
+
+  # Token Information (enriched from contract calls)
+  tokenName: String # Token name (e.g., "FANETIC-RIZKY")
+  tokenSymbol: String # Token symbol (e.g., "FANT-FANETIC-RIZKY")
+
+  # Event Metadata
+  blockNumber: BigInt! # Block number
+  blockTimestamp: BigInt! # Unix timestamp
+  transactionHash: String! # Transaction hash
+}
+
+# MockIDRX On/Off-Ramp Events
+
+type MockIDRX_OnRamp {
+  id: ID! # Format: {chainId}_{blockNumber}_{logIndex}
+
+  # Event Parameters
+  user: String! # User wallet address (indexed, lowercase)
+  amount: BigInt! # IDRX amount purchased (2 decimals)
+
+  # Event Metadata
+  blockNumber: BigInt! # Block number
+  blockTimestamp: BigInt! # Unix timestamp
+  transactionHash: String! # Transaction hash
+}
+
+type MockIDRX_OffRamp {
+  id: ID! # Format: {chainId}_{blockNumber}_{logIndex}
+
+  # Event Parameters
+  user: String! # User wallet address (indexed, lowercase)
+  amount: BigInt! # IDRX amount sold (2 decimals)
+
+  # Event Metadata
+  blockNumber: BigInt! # Block number
+  blockTimestamp: BigInt! # Unix timestamp
+  transactionHash: String! # Transaction hash
+}
