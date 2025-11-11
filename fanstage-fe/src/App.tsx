@@ -8,7 +8,7 @@ import Campaigns from "./pages/Campaigns";
 import CampaignDetail from "./pages/CampaignDetail";
 import Artists from "./pages/Artists";
 import Dashboard from "./pages/Dashboard";
-import Portfolio from "./pages/Portfolio";
+import Exchange from "./pages/Exchange";
 import RegisterArtist from "./pages/RegisterArtist";
 import CreateCampaign from "./pages/CreateCampaign";
 import Staking from "./pages/Staking";
@@ -31,7 +31,7 @@ const App = () => (
             <Route path="/campaigns/:id" element={<CampaignDetail />} />
             <Route path="/artists" element={<Artists />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/exchange" element={<Exchange />} />
             <Route path="/register-artist" element={<RegisterArtist />} />
             <Route path="/create-campaign" element={<CreateCampaign />} />
             <Route path="/staking" element={<Staking />} />

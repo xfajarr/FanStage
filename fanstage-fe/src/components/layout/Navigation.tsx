@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Wallet, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -6,12 +6,14 @@ import { cn } from '@/lib/utils';
 import ConnectWalletButton from '../ConnectWalletButton';
 import { NetworkSwitch } from '../NetworkSwitch';
 import { usePrivy } from '@privy-io/react-auth';
+import { privyApiClient } from '@/services/privyAuth';
+import type { UserProfile } from '@/types';
 
 const navItems = [
   { name: 'Home', path: '/' },
   { name: 'Campaigns', path: '/campaigns' },
   { name: 'Artists', path: '/artists' },
-  { name: 'Staking', path: '/staking' },
+  // { name: 'Staking', path: '/staking' },
   { name: 'Dashboard', path: '/dashboard' },
   { name: 'Profile', path: '/profile', requiresAuth: true },
 ] as const;
@@ -20,6 +22,40 @@ export default function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { authenticated, user } = usePrivy();
   const location = useLocation();
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
+
+  useEffect(() => {
+    if (!authenticated) {
+      setUserProfile(null);
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingProfile(true);
+
+    (async () => {
+      try {
+        const profile = await privyApiClient.getUserProfile();
+        if (!cancelled) {
+          setUserProfile(profile);
+        }
+      } catch (error) {
+        console.error('Failed to load navigation profile:', error);
+        if (!cancelled) {
+          setUserProfile(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingProfile(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authenticated]);
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/80 backdrop-blur-lg">
@@ -43,28 +79,46 @@ export default function Navigation() {
             {navItems
               .filter((item) => !('requiresAuth' in item) || !item.requiresAuth || authenticated)
               .map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={cn(
-                  'px-4 py-2 rounded-lg text-sm font-medium transition-all',
-                  location.pathname === item.path
-                    ? 'bg-accent text-accent-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
-                )}
-              >
-                {item.name}
-              </Link>
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  className={cn(
+                    'px-4 py-2 rounded-lg text-sm font-medium transition-all',
+                    location.pathname === item.path
+                      ? 'bg-accent text-accent-foreground'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                  )}
+                >
+                  {item.name}
+                </Link>
               ))}
+            <span className="px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground border border-dashed border-border/60 flex items-center gap-2">
+              Staking
+              <span className="text-xs font-semibold uppercase bg-muted px-2 py-0.5 rounded-full bg-orange-500 text-white">
+                Coming Soon
+              </span>
+            </span>
           </div>
 
           {/* Wallet Connection */}
           <div className="hidden md:flex items-center space-x-3">
             {authenticated && user ? (
               <>
-                <Link to="/portfolio">
+                {userProfile?.role === 'artist' && (
+                  <Link to="/create-campaign">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="rounded-lg gradient-primary text-primary-foreground"
+                    disabled={loadingProfile}
+                  >
+                    + Create Campaign
+                  </Button>
+                </Link>
+              )}
+              <Link to="/exchange">
                   <Button variant="outline" size="sm" className="rounded-lg">
-                    Portfolio
+                    Exchange
                   </Button>
                 </Link>
                 <NetworkSwitch />
@@ -112,16 +166,27 @@ export default function Navigation() {
               <div className="pt-4 border-t border-border">
                 {authenticated && user ? (
                   <>
+                    {userProfile?.role === 'artist' && (
+                      <Link to="/create-campaign" className="w-full mb-2">
+                        <Button
+                          className="w-full rounded-lg gradient-primary text-primary-foreground"
+                          onClick={() => setMobileMenuOpen(false)}
+                          disabled={loadingProfile}
+                        >
+                          + Create Campaign
+                        </Button>
+                      </Link>
+                    )}
                     <div className="w-full mb-2">
                       <NetworkSwitch />
                     </div>
-                    <Link to="/portfolio">
+                    <Link to="/exchange">
                       <Button
                         variant="outline"
                         className="w-full mb-2 rounded-lg"
                         onClick={() => setMobileMenuOpen(false)}
                       >
-                        Portfolio
+                        Exchange
                       </Button>
                     </Link>
                     <div className="flex items-center justify-between p-2 bg-muted rounded-lg mb-2">
