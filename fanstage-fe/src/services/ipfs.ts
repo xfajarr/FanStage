@@ -26,6 +26,7 @@ export interface CampaignMetadata {
     threshold: string;
     profitPercent: number;
     benefits: string;
+    imageUrl: string;
   }>;
   createdAt: string;
 }

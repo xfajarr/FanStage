@@ -1,0 +1,44 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+name: fanstage-indexer
+networks:
+- id: 84532
+  start_block: 33509359  
+  contracts:
+  - name: ArtistIdentity
+    address:
+    - 0x396D60e667f82857334b4a66Abb07f907A03b7d0
+    handler: src/EventHandlers.ts
+    events:
+    - event: ArtistRegistered(address indexed artist, uint256 indexed tokenId, string name)
+  - name: CampaignRegistry
+    address:
+    - 0xE82f158Efb65F75183122FB347de157fb1e605Ea
+    handler: src/EventHandlers.ts
+    events:
+    - event: CampaignCreated(uint256 indexed campaignId, address indexed artist, address campaignContract)
+  - name: CampaignContract
+    handler: src/EventHandlers.ts
+    events:
+    - event: CampaignCreated(address indexed artist, string artistTokenName, uint256 targetAmount, uint256 deadline, address artistToken)
+    - event: FundingReceived(address indexed funder, uint256 amount, uint8 tier, uint256 tokenId)
+    - event: CampaignFunded(uint256 totalRaised)
+    - event: TierBadgeMinted(address indexed funder, uint256 indexed tierId, string tierName)
+    - event: RevenueSubmitted(uint256 revenueAmount)
+    - event: RevenueDistributed(address indexed artist, uint256 artistShare, uint256 funderPoolAmount)
+    - event: RevenueClaimed(address indexed funder, uint256 amount)
+    - event: RefundClaimed(address indexed funder, uint256 amount)
+    - event: CampaignMetadataUpdated(string newIpfsHash)
+    - event: DeadlineExtended(uint256 newDeadline)
+  - name: ArtistToken
+    handler: src/EventHandlers.ts
+    events:
+    - event: Transfer(address indexed from, address indexed to, uint256 value)
+  - name: MockIDRX
+    address:
+    - 0x04846A9EC8f0c7405F3040a7ECF20cF081326846
+    handler: src/EventHandlers.ts
+    events:
+    - event: OnRamp(address indexed user, uint256 amount)
+    - event: OffRamp(address indexed user, uint256 amount)
+unordered_multichain_mode: true
+preload_handlers: true

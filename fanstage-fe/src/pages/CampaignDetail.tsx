@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useAccount } from 'wagmi';
 import {
   ArrowLeft,
   Loader2,
@@ -8,19 +9,19 @@ import {
   Clock,
   TrendingUp,
   ArrowUpRight,
+  CheckCircle,
 } from 'lucide-react';
 import Navigation from '@/components/layout/Navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import InvestmentModal from '@/components/campaigns/InvestmentModal';
+import SubmitRevenueModal from '@/components/campaigns/SubmitRevenueModal';
+import ClaimRevenueModal from '@/components/campaigns/ClaimRevenueModal';
 import campaignsApi from '@/services/campaigns';
-
-const formatCurrency = (value: string) => {
-  const numeric = Number(value);
-  if (Number.isNaN(numeric)) return value;
-  return `${numeric.toLocaleString()} IDRX`;
-};
+import { formatIDRX } from '@/utils/currency';
+import { useCampaignData, useCampaignFundersCount, CampaignStatus, useClaimableRevenue, useTotalFunded } from '@/services/contracts';
 
 const fetchMetadata = async (ipfsHash: string) => {
   const cid = ipfsHash.replace('ipfs://', '');
@@ -36,15 +37,42 @@ const fetchMetadata = async (ipfsHash: string) => {
 
 export default function CampaignDetail() {
   const { id } = useParams();
+  const { address } = useAccount();
+  const [isInvestModalOpen, setIsInvestModalOpen] = useState(false);
+  const [isSubmitRevenueModalOpen, setIsSubmitRevenueModalOpen] = useState(false);
+  const [isClaimRevenueModalOpen, setIsClaimRevenueModalOpen] = useState(false);
 
   const {
     data: campaign,
     status,
+    refetch: refetchCampaign,
   } = useQuery({
     queryKey: ['campaign', id],
     queryFn: () => campaignsApi.getCampaignById(id ?? ''),
     enabled: Boolean(id),
   });
+
+  // Get real-time data from contract
+  const { data: contractData } = useCampaignData(
+    (campaign?.campaignContract || '0x') as `0x${string}`
+  );
+
+  // Get real-time funders count from contract
+  const { data: fundersCount } = useCampaignFundersCount(
+    (campaign?.campaignContract || '0x') as `0x${string}`
+  );
+
+  // Get claimable revenue for current user
+  const claimableRevenue = useClaimableRevenue(
+    (campaign?.campaignContract || '0x') as `0x${string}`,
+    (address || '0x') as `0x${string}`
+  );
+
+  // Get total funded by current user
+  const totalFunded = useTotalFunded(
+    (campaign?.campaignContract || '0x') as `0x${string}`,
+    (address || '0x') as `0x${string}`
+  );
 
   const {
     data: metadata,
@@ -59,11 +87,19 @@ export default function CampaignDetail() {
     if (!campaign) {
       return { raised: 0, goal: 0, progress: 0 };
     }
-    const raised = Number(campaign.currentFunding) || 0;
-    const goal = Number(campaign.fundingGoal) || 0;
+
+    // Use real-time contract data if available
+    const raised = contractData
+      ? Number(contractData.totalRaised) / 1e2 // Convert from wei to IDRX
+      : Number(campaign.currentFunding) || 0;
+
+    const goal = contractData
+      ? Number(contractData.targetAmount) / 1e2
+      : Number(campaign.fundingGoal) || 0;
+
     const progress = goal > 0 ? Math.min((raised / goal) * 100, 100) : 0;
     return { raised, goal, progress };
-  }, [campaign]);
+  }, [campaign, contractData]);
 
   const daysRemaining = useMemo(() => {
     if (!campaign) return 0;
@@ -72,6 +108,22 @@ export default function CampaignDetail() {
     if (Number.isNaN(end)) return 0;
     return Math.max(Math.ceil((end - now) / (1000 * 60 * 60 * 24)), 0);
   }, [campaign]);
+
+  // Check if campaign is fully funded based on contract status
+  const isCampaignFunded = contractData?.status === CampaignStatus.FUNDED ||
+                           contractData?.status === CampaignStatus.COMPLETED;
+
+  // Check if current user is the artist
+  const isArtist = useMemo(() => {
+    if (!address || !contractData?.artist) return false;
+    return address.toLowerCase() === contractData.artist.toLowerCase();
+  }, [address, contractData?.artist]);
+
+  // Check if current user is a backer with claimable revenue
+  const isBacker = useMemo(() => {
+    if (!address) return false;
+    return parseFloat(claimableRevenue) > 0;
+  }, [address, claimableRevenue]);
 
   if (status === 'pending') {
     return (
@@ -187,16 +239,23 @@ export default function CampaignDetail() {
                 <div>
                   <div className="flex justify-between items-baseline">
                     <span className="text-3xl font-bold text-primary">
-                      {formatCurrency(campaign.currentFunding)}
+                      {formatIDRX(fundingStats.raised)}
                     </span>
                     <span className="text-sm text-muted-foreground">
-                      of {formatCurrency(campaign.fundingGoal)}
+                      of {formatIDRX(fundingStats.goal)}
                     </span>
                   </div>
                   <Progress value={fundingStats.progress} className="h-3 my-3" />
-                  <p className="text-sm text-muted-foreground">
-                    {fundingStats.progress.toFixed(1)}% funded
-                  </p>
+                  {isCampaignFunded ? (
+                    <div className="flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400">
+                      <CheckCircle className="h-4 w-4" />
+                      <span>100% funded - Goal Reached!</span>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      {fundingStats.progress.toFixed(1)}% funded
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 border-y border-border py-4 text-sm">
@@ -205,7 +264,9 @@ export default function CampaignDetail() {
                       <Users className="h-4 w-4" />
                       Backers
                     </div>
-                    <p className="text-2xl font-bold">{campaign.backerCount}</p>
+                    <p className="text-2xl font-bold">
+                      {fundersCount ? Number(fundersCount) : campaign.backerCount}
+                    </p>
                   </div>
                   <div>
                     <div className="flex items-center gap-1 text-muted-foreground">
@@ -223,16 +284,125 @@ export default function CampaignDetail() {
                   </div>
                 </div>
 
-                <Link to={`/campaigns/${campaign.id}?invest=true`}>
-                  <Button className="w-full rounded-lg gradient-primary text-primary-foreground">
+                {campaign.status === 'Ended' ? (
+                  <div className="space-y-3 mt-4">
+                    <Button
+                      className="w-full rounded-lg"
+                      disabled
+                      variant="secondary"
+                    >
+                      Campaign Ended
+                    </Button>
+                    <p className="text-xs text-center text-muted-foreground">
+                      This campaign has reached its deadline and is no longer accepting investments.
+                    </p>
+                  </div>
+                ) : contractData?.status === CampaignStatus.FUNDED && isArtist ? (
+                  <div className="space-y-3 mt-4">
+                    <Button
+                      className="w-full rounded-lg gradient-primary text-primary-foreground"
+                      onClick={() => setIsSubmitRevenueModalOpen(true)}
+                    >
+                      <TrendingUp className="mr-2 h-4 w-4" />
+                      Distribute Funds
+                    </Button>
+                    <p className="text-xs text-center text-muted-foreground">
+                      Distribute raised funds to you and your backers.
+                    </p>
+                  </div>
+                ) : contractData?.status === CampaignStatus.COMPLETED && isBacker ? (
+                  <div className="space-y-3 mt-4">
+                    <Button
+                      className="w-full rounded-lg gradient-primary text-primary-foreground"
+                      onClick={() => setIsClaimRevenueModalOpen(true)}
+                    >
+                      <TrendingUp className="mr-2 h-4 w-4" />
+                      Claim Your Share
+                    </Button>
+                    <p className="text-xs text-center text-muted-foreground">
+                      You have {formatIDRX(parseFloat(claimableRevenue))} ready to claim!
+                    </p>
+                  </div>
+                ) : contractData?.status === CampaignStatus.COMPLETED ? (
+                  <div className="space-y-3 mt-4">
+                    <Button
+                      className="w-full rounded-lg bg-green-600 hover:bg-green-700 text-white"
+                      disabled
+                    >
+                      <CheckCircle className="mr-2 h-4 w-4" />
+                      Funds Distributed
+                    </Button>
+                    <p className="text-xs text-center text-muted-foreground">
+                      Funds have been distributed. Backers can claim their shares.
+                    </p>
+                  </div>
+                ) : isCampaignFunded ? (
+                  <div className="space-y-3 mt-4">
+                    <Button
+                      className="w-full rounded-lg bg-green-600 hover:bg-green-700 text-white"
+                      disabled
+                    >
+                      <CheckCircle className="mr-2 h-4 w-4" />
+                      Fully Funded
+                    </Button>
+                    <p className="text-xs text-center text-muted-foreground">
+                      {isArtist
+                        ? "Campaign fully funded! Distribute funds to unlock profits."
+                        : "This campaign has reached its funding goal and is no longer accepting investments."}
+                    </p>
+                  </div>
+                ) : (
+                  <Button
+                    className="w-full rounded-lg gradient-primary text-primary-foreground mt-4"
+                    onClick={() => setIsInvestModalOpen(true)}
+                  >
                     Invest Now
                     <ArrowUpRight className="ml-2 h-4 w-4" />
                   </Button>
-                </Link>
+                )}
               </div>
             </Card>
           </div>
         </div>
+
+        <InvestmentModal
+          open={isInvestModalOpen}
+          onOpenChange={setIsInvestModalOpen}
+          campaignContract={campaign.campaignContract || ''}
+          campaignTitle={campaign.title}
+          targetAmount={fundingStats.goal.toString()}
+          currentFunding={fundingStats.raised.toString()}
+          campaignStatus={campaign.status}
+          campaignEndDate={campaign.endDate}
+          onInvestmentSuccess={() => {
+            refetchCampaign();
+          }}
+        />
+
+        <SubmitRevenueModal
+          open={isSubmitRevenueModalOpen}
+          onOpenChange={setIsSubmitRevenueModalOpen}
+          campaignContract={campaign.campaignContract || ''}
+          campaignTitle={campaign.title}
+          funderSharePercent={campaign.profitShare.fan}
+          totalRaised={fundingStats.raised}
+          fundersCount={fundersCount ? Number(fundersCount) : campaign.backerCount}
+          onRevenueSubmitted={() => {
+            refetchCampaign();
+          }}
+        />
+
+        <ClaimRevenueModal
+          open={isClaimRevenueModalOpen}
+          onOpenChange={setIsClaimRevenueModalOpen}
+          campaignContract={campaign.campaignContract || ''}
+          campaignTitle={campaign.title}
+          claimableAmount={parseFloat(claimableRevenue)}
+          investedAmount={parseFloat(totalFunded)}
+          onRevenueClaimed={() => {
+            refetchCampaign();
+          }}
+        />
       </div>
     </div>
   );

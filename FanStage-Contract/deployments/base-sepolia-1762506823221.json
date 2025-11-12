@@ -1,0 +1,25 @@
+{
+  "network": "base-sepolia",
+  "chainId": 84532,
+  "deployer": "0x564323aE0D8473103F3763814c5121Ca9e48004B",
+  "timestamp": "2025-11-07T09:13:43.221Z",
+  "contracts": {
+    "MockIDRX": "0x69B8aC73b16669730bf1603B91aD33b7bf3b9036",
+    "ArtistIdentity": "0x85D9e45d686cc912040c7F1506eaF3d2eae15cAb",
+    "CampaignRegistry": "0xdc71C9B481EDEfD3a89d703D66F1831311Ee1Db2"
+  },
+  "config": {
+    "platformWallet": "0xADd5E67b54F3AaA8499fE546b301b7D6cc68419d",
+    "campaignCreationFee": "1000000"
+  },
+  "blockExplorer": {
+    "MockIDRX": "https://sepolia.basescan.org/address/0x69B8aC73b16669730bf1603B91aD33b7bf3b9036",
+    "ArtistIdentity": "https://sepolia.basescan.org/address/0x85D9e45d686cc912040c7F1506eaF3d2eae15cAb",
+    "CampaignRegistry": "https://sepolia.basescan.org/address/0xdc71C9B481EDEfD3a89d703D66F1831311Ee1Db2"
+  },
+  "verifyCommands": {
+    "MockIDRX": "npx hardhat verify --network base-sepolia 0x69B8aC73b16669730bf1603B91aD33b7bf3b9036",
+    "ArtistIdentity": "npx hardhat verify --network base-sepolia 0x85D9e45d686cc912040c7F1506eaF3d2eae15cAb",
+    "CampaignRegistry": "npx hardhat verify --network base-sepolia 0xdc71C9B481EDEfD3a89d703D66F1831311Ee1Db2 0x85D9e45d686cc912040c7F1506eaF3d2eae15cAb 0x69B8aC73b16669730bf1603B91aD33b7bf3b9036 0xADd5E67b54F3AaA8499fE546b301b7D6cc68419d 1000000"
+  }
+}

@@ -3,7 +3,6 @@ import { usePrivy } from '@privy-io/react-auth';
 import { useNavigate } from 'react-router-dom';
 import { useAccount, useSwitchChain } from 'wagmi';
 import { baseSepolia } from 'wagmi/chains';
-import { formatEther } from 'viem';
 import { toast } from 'sonner';
 
 import { privyApiClient } from '@/services/privyAuth';
@@ -38,6 +37,7 @@ export type TierFormState = {
   threshold: string;
   profitPercent: string;
   benefits: string;
+  imageUrl: string;
 };
 
 const INITIAL_FORM_STATE: CampaignFormState = {
@@ -57,6 +57,7 @@ const INITIAL_TIER: TierFormState = {
   threshold: '',
   profitPercent: '',
   benefits: '',
+  imageUrl: '',
 };
 
 export const useCreateCampaignFlow = () => {
@@ -104,7 +105,7 @@ export const useCreateCampaignFlow = () => {
 
   const creationFee = useMemo(() => {
     if (creationFeeRaw && typeof creationFeeRaw === 'bigint') {
-      return formatEther(creationFeeRaw);
+      return (Number(creationFeeRaw) / 1e2).toFixed(2);
     }
     return '0';
   }, [creationFeeRaw]);
@@ -174,7 +175,6 @@ export const useCreateCampaignFlow = () => {
           }, 2000);
         } catch (apiError) {
           console.error('Failed to save campaign in backend:', apiError);
-          toast.error('On-chain campaign created, but failed to save in backend.');
         } finally {
           setIsSubmitting(false);
           pendingBackendPayload.current = null;
@@ -394,6 +394,7 @@ export const useCreateCampaignFlow = () => {
           threshold: tier.threshold.trim(),
           profitPercent: Number(tier.profitPercent),
           benefits: tier.benefits.trim(),
+          imageUrl: tier.imageUrl.trim(),
         }));
 
         const metadataUri = await ipfsService.uploadCampaignMetadata({

@@ -1,10 +1,11 @@
-import { Loader2, Plus, Trash2, AlertTriangle, Info } from 'lucide-react';
+import { Loader2, Plus, Trash2, AlertTriangle, Info, CheckCircle2 } from 'lucide-react';
 import Navigation from '@/components/layout/Navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
+import ImageUpload from '@/components/ui/image-upload';
 import useCreateCampaignFlow from '@/features/campaigns/useCreateCampaignFlow';
 
 export default function CreateCampaign() {
@@ -143,16 +144,16 @@ export default function CreateCampaign() {
                 </div>
 
                 <div>
-                  <Label htmlFor="coverImageUrl">Cover Image URL</Label>
-                  <Input
-                    id="coverImageUrl"
+                  <Label htmlFor="coverImageUrl">Cover Image</Label>
+                  <ImageUpload
                     value={formState.coverImageUrl}
-                    onChange={(event) => updateFormField('coverImageUrl', event.target.value)}
-                    placeholder="https://..."
-                    className="rounded-lg"
+                    onChange={(url) => updateFormField('coverImageUrl', url)}
+                    disabled={isSubmitting || isUploadingToIPFS}
+                    maxSize={10}
+                    id="cover-image-upload"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Provide an accessible image URL (IPFS or HTTPS). Optional but recommended.
+                    Upload an image or provide a URL. Automatically uploaded to IPFS for decentralized storage.
                   </p>
                 </div>
               </div>
@@ -247,49 +248,6 @@ export default function CreateCampaign() {
                   />
                 </div>
               </div>
-
-              <div className="rounded-md border border-primary/30 bg-primary/5 p-4 text-sm text-primary flex items-start gap-3">
-                <Info className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                <div>
-                  <p className="font-semibold">Campaign Creation Fee</p>
-                  <p>
-                    You must hold enough IDRX to cover the creation fee of{' '}
-                    <span className="font-medium">{creationFee} IDRX</span>. Ensure you have approved
-                    the Campaign Registry to spend this amount.
-                  </p>
-                  <div className="mt-3 flex flex-col gap-2">
-                    {!hasSufficientBalance && (
-                      <p className="text-xs text-destructive">
-                        Your IDRX balance is too low to cover the creation fee.
-                      </p>
-                    )}
-                    {!hasSufficientAllowance && (
-                      <p className="text-xs text-destructive">
-                        Please approve the Campaign Registry to spend {creationFee} IDRX before launching.
-                      </p>
-                    )}
-                    {Number(creationFee) > 0 && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleApproveFee}
-                        disabled={isApprovePending || isApproveConfirming}
-                        className="self-start rounded-lg"
-                      >
-                        {isApprovePending || isApproveConfirming ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Approving...
-                          </>
-                        ) : (
-                          'Approve Fee'
-                        )}
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
             </Card>
 
             <Card className="p-6 space-y-6">
@@ -382,6 +340,21 @@ export default function CreateCampaign() {
                         className="rounded-lg min-h-24"
                       />
                     </div>
+
+                    <div>
+                      <Label>Tier Badge Image</Label>
+                      <ImageUpload
+                        value={tier.imageUrl}
+                        onChange={(url) => updateTierField(index, 'imageUrl', url)}
+                        disabled={isSubmitting || isUploadingToIPFS}
+                        maxSize={5}
+                        id={`tier-image-${index}`}
+                        compact={true}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Upload an image for this tier's NFT badge. Optional but recommended.
+                      </p>
+                    </div>
                   </Card>
                 ))}
               </div>
@@ -391,8 +364,7 @@ export default function CreateCampaign() {
               <h2 className="text-xl font-semibold">Launch</h2>
               <p className="text-sm text-muted-foreground">
                 Review your details carefully. You&apos;ll sign a transaction to deploy your
-                campaign smart contract. Once confirmed, we&apos;ll save the campaign in the
-                FanStage backend.
+                campaign smart contract.
               </p>
 
               {transactionHash && (
@@ -413,36 +385,84 @@ export default function CreateCampaign() {
                 </div>
               )}
 
-              <div className="flex justify-end gap-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="rounded-lg"
-                  onClick={resetForm}
-                  disabled={isSubmitting}
-                >
-                  Reset Form
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="rounded-lg gradient-primary text-primary-foreground"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      {isUploadingToIPFS
-                        ? 'Uploading metadata...'
-                        : isPending
-                        ? 'Submitting transaction...'
-                        : isConfirming
-                        ? 'Waiting for confirmation...'
-                        : 'Processing...'}
-                    </>
+              <div className="flex flex-col gap-3">
+                {/* Show approval status if needed */}
+                {!hasSufficientAllowance && Number(creationFee) > 0 && (
+                  <div className="rounded-md border border-blue-200 bg-blue-50 dark:bg-blue-950 dark:border-blue-800 p-3 text-sm">
+                    <p className="font-medium text-blue-900 dark:text-blue-100 mb-1">
+                      Step 1: Approve Creation Fee
+                    </p>
+                    <p className="text-xs text-blue-700 dark:text-blue-300">
+                      First, approve the Campaign Registry to spend {creationFee} IDRX for the creation fee.
+                    </p>
+                  </div>
+                )}
+
+                {hasSufficientAllowance && Number(creationFee) > 0 && (
+                  <div className="rounded-md border border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800 p-3 text-sm">
+                    <p className="font-medium text-green-900 dark:text-green-100 flex items-center gap-2">
+                      <span className="text-green-600">✓</span> Fee Approved
+                    </p>
+                    <p className="text-xs text-green-700 dark:text-green-300">
+                      You can now launch your campaign.
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="rounded-lg"
+                    onClick={resetForm}
+                    disabled={isSubmitting || isApprovePending || isApproveConfirming}
+                  >
+                    Reset Form
+                  </Button>
+
+                  {/* Show Approve button if allowance is insufficient */}
+                  {!hasSufficientAllowance && Number(creationFee) > 0 ? (
+                    <Button
+                      type="button"
+                      onClick={handleApproveFee}
+                      disabled={!hasSufficientBalance || isApprovePending || isApproveConfirming}
+                      className="rounded-lg gradient-primary text-primary-foreground"
+                    >
+                      {isApprovePending || isApproveConfirming ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          {isApprovePending ? 'Approving...' : 'Confirming...'}
+                        </>
+                      ) : (
+                        <>
+                          Approve Fee ({creationFee} IDRX)
+                        </>
+                      )}
+                    </Button>
                   ) : (
-                    'Launch Campaign'
+                    /* Show Launch button if allowance is sufficient */
+                    <Button
+                      type="submit"
+                      disabled={isSubmitting || !hasSufficientBalance || !hasSufficientAllowance}
+                      className="rounded-lg gradient-primary text-primary-foreground"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          {isUploadingToIPFS
+                            ? 'Uploading metadata...'
+                            : isPending
+                            ? 'Submitting transaction...'
+                            : isConfirming
+                            ? 'Waiting for confirmation...'
+                            : 'Processing...'}
+                        </>
+                      ) : (
+                        'Launch Campaign'
+                      )}
+                    </Button>
                   )}
-                </Button>
+                </div>
               </div>
             </Card>
           </form>
