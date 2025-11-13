@@ -205,7 +205,6 @@ function FanDashboard({ userProfile, dashboardData }: FanDashboardProps) {
           artistLookup.set(artist.artist.toLowerCase(), artist.name);
         });
 
-        // Calculate balances and enrich with campaign data
         const tokenBalances = new Map<string, { balance: bigint; firstTransfer: any }>();
         
         // Calculate net balance for each artist token
