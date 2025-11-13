@@ -8,6 +8,7 @@ import { NetworkSwitch } from '../NetworkSwitch';
 import { usePrivy } from '@privy-io/react-auth';
 import { privyApiClient } from '@/services/privyAuth';
 import type { UserProfile } from '@/types';
+import logoImage from '@/assets/FanStage_Finalist_DemoDay.png';
 
 const navItems = [
   { name: 'Home', path: '/' },
@@ -64,14 +65,12 @@ export default function Navigation() {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2 group">
             <div className="relative">
-              <div className="absolute inset-0 bg-primary/20 blur-xl group-hover:bg-primary/30 transition-all" />
-              <div className="relative flex h-10 w-10 items-center justify-center rounded-xl gradient-primary shadow-medium">
-                <span className="text-xl font-bold text-primary-foreground">F</span>
-              </div>
+              <img 
+                src={logoImage} 
+                alt="FanStage Logo" 
+                className="relative h-12 w-auto object-contain transition-all group-hover:scale-105"
+              />
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-primary to-orange-500 bg-clip-text text-transparent">
-              FanStage
-            </span>
           </Link>
 
           {/* Desktop Navigation */}
